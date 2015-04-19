@@ -1,0 +1,72 @@
+#!/bin/bash
+# Comando "Glog"
+# arg1
+#   comando
+# arg2
+#   Mensaje
+# arg3 (opcional)
+#   tipo de mensaje. 
+#   default: debug
+#   opciones: debug info warn error
+
+#./bin/glog auxiliarCommand mensaje1 debug
+#./bin/glog anOtherCommand mensaje2 error
+#./bin/glog auxiliarCommand mensaje3
+
+
+
+
+
+
+
+#revisar si un elemento existe en un array
+array_contains () { 
+    local array="$1[@]"
+    local seeking=$2
+    local in=1
+    for element in "${!array}"; do
+        if [[ $element == $seeking ]]; then
+            in=0
+            break
+        fi
+    done
+    return $in
+}
+
+COMANDO="$1"
+MENSAJE="$2"
+TIPO="$3"
+
+LOGDIR="/Users/solsticeba8/Documents/Facultad/sistemas operativos/tp/sisop-4h/log/"
+mkdir -p "$LOGDIR"
+LOGFILE="${LOGDIR}$COMANDO.log"
+GENERAL_LOGFILE="${LOGDIR}salida.log"
+
+generar_log () {
+
+
+TIPOS=("INFO" "WAR" "ERR")
+TIPO_DEFAULT="INFO"
+
+TIMESTAMP=`date +"%Y-%m-%d_%H-%M-%S"`
+
+array_contains TIPOS $TIPO  && TIPO=$TIPO || TIPO=$TIPO_DEFAULT
+
+
+AUTOR=$(whoami);
+log="$TIMESTAMP - $TIPO - $AUTOR - $COMANDO - $MENSAJE"
+
+echo "$log"
+echo "$log" >> "$LOGFILE"
+
+}
+
+generar_log
+
+
+
+
+#array_contains tipos "debugs"  && echo yes || echo no    # yes
+
+
+
