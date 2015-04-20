@@ -13,9 +13,7 @@
 #./bin/glog anOtherCommand mensaje2 error
 #./bin/glog auxiliarCommand mensaje3
 
-
-
-
+#TODO: documentar, documentar logsize, help menu, 
 
 
 
@@ -33,40 +31,48 @@ array_contains () {
     return $in
 }
 
+generar_log () {
+
+    TIPOS=("INFO" "WAR" "ERR")
+    TIPO_DEFAULT="INFO"
+
+    TIMESTAMP=`date +"%Y-%m-%d_%H-%M-%S"`
+
+    array_contains TIPOS $TIPO  && TIPO=$TIPO || TIPO=$TIPO_DEFAULT
+
+
+    AUTOR=$(whoami);
+    log="$TIMESTAMP - $TIPO - $AUTOR - $COMANDO - $MENSAJE"
+
+    echo "$log" >> "$LOGFILE"
+
+}
+
+
+controlar_crecimiento_logfile (){
+
+    LOGFILE_SIZE=`wc -l "$LOGFILE" | xargs | cut -f1 -d' '`
+
+    if [[ "$LOGFILE_SIZE" -gt $LOGSIZE ]]; then
+        tail -$LOGSAVE "$LOGFILE" > "${LOGFILE}save"
+        mv "${LOGFILE}save" "$LOGFILE"
+    fi
+
+}
+############################################
+
+
 COMANDO="$1"
 MENSAJE="$2"
 TIPO="$3"
 
+LOGSIZE="2000"
+LOGSAVE="100" #logs que se guardan al reiniciar archivo
 LOGDIR="/Users/solsticeba8/Documents/Facultad/sistemas operativos/tp/sisop-4h/log/"
 mkdir -p "$LOGDIR"
 LOGFILE="${LOGDIR}$COMANDO.log"
 GENERAL_LOGFILE="${LOGDIR}salida.log"
 
-generar_log () {
-
-
-TIPOS=("INFO" "WAR" "ERR")
-TIPO_DEFAULT="INFO"
-
-TIMESTAMP=`date +"%Y-%m-%d_%H-%M-%S"`
-
-array_contains TIPOS $TIPO  && TIPO=$TIPO || TIPO=$TIPO_DEFAULT
-
-
-AUTOR=$(whoami);
-log="$TIMESTAMP - $TIPO - $AUTOR - $COMANDO - $MENSAJE"
-
-echo "$log"
-echo "$log" >> "$LOGFILE"
-
-}
-
 generar_log
-
-
-
-
-#array_contains tipos "debugs"  && echo yes || echo no    # yes
-
-
+controlar_crecimiento_logfile
 

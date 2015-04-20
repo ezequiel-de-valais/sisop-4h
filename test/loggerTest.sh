@@ -18,4 +18,4 @@ cd "$_DIR"
 ./bin/glog auxiliarCommand mensaje1 INFO
 ./bin/glog anOtherCommand mensaje2 ERR
 ./bin/glog auxiliarCommand mensaje3 WAR
-./bin/glog command "este es el mensaje que genera command" INFO
+./bin/glog coammand "este es el mensaje que genera command" INFO
