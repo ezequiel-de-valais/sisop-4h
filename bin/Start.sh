@@ -19,6 +19,8 @@ PIDproceso=$(echo $ProcesosCorriendo | head -n 1 | head -c 4)
 if [ "$PIDproceso" == "" ]; then
 	# Inicio el proceso
 	bash $Proceso &
+else
+	#Escribir en el log que el archivo se esta ejecutando
 fi
 
  
