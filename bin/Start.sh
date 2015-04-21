@@ -18,7 +18,7 @@ ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "Start.sh" | g
 PIDproceso=$(echo $ProcesosCorriendo | head -n 1 | head -c 4)
 if [ ! $PIDproceso ]; then
 	# Inicio el proceso
-	bash $Proceso
+	bash $Proceso &
 fi
 
  
