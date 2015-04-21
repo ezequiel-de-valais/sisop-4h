@@ -16,7 +16,7 @@ Proceso=$1
 ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "Start.sh" | grep $Proceso)
 # Del filtro anterior , me quedo con la primer linea , y de la primer linea saco los primeros 4 bytes 
 PIDproceso=$(echo $ProcesosCorriendo | head -n 1 | head -c 4)
-if [ ! $PIDproceso ]; then
+if [ "$PIDproceso" == "" ]; then
 	# Inicio el proceso
 	bash $Proceso &
 fi
