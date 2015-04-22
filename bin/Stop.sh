@@ -9,15 +9,19 @@ Proceso=$1
 # para verificar que no esta corriendo
 # Obtengo procesos con ps ax , uso grep para quedarme con los que no son $$ (este proceso),
 # que no sean grep , que no sea Start.sh y que matchee cn el nombre del proceso
+
+Command="Stop.sh"
 ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "Stop.sh" | grep $Proceso)
 # Del filtro anterior , me quedo con la primer linea , y de la primer linea saco los primeros 4 bytes 
 PIDproceso=$(echo "$ProcesosCorriendo" | head -n 1 | head -c 5)
 if [ "$PIDproceso" == "" ]; then
-	echo "proceso no existe"
-	#Escribir en el log que el archivo se esta ejecutando
+
+	./glog $Command "proceso n existe" WAR
 else
-	# Detengo el proceso
+	./glog $Command "matar proceso" INFO
 	kill "$PIDproceso"
+	#TODO: revisar proceso no existe
+	#TODO: hacer while por si existe mas de un proceso con el nombre o algo asi
 fi
 
  
