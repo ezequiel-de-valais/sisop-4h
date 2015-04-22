@@ -68,7 +68,7 @@ TIPO="$3"
 
 LOGSIZE="2000"
 LOGSAVE="100" #logs que se guardan al reiniciar archivo
-LOGDIR="/Users/solsticeba8/Documents/Facultad/sistemas operativos/tp/sisop-4h/log/"
+LOGDIR="/home/ezequiel/documents/facultad/sistemasOperativos/sisop-4h/log/"
 mkdir -p "$LOGDIR"
 LOGFILE="${LOGDIR}$COMANDO.log"
 GENERAL_LOGFILE="${LOGDIR}salida.log"

@@ -10,7 +10,7 @@
 
 #   loggerTest.sh
 
-_DIR=/Users/solsticeba8/Documents/Facultad/sistemas\ operativos/tp/sisop-4h/
+_DIR=/home/ezequiel/documents/facultad/sistemasOperativos/sisop-4h/
 cd "$_DIR"
 #export Glog=${_DIR}bin/Glog.sh
 #log="./Glog.sh"

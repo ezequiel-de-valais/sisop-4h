@@ -1,9 +1,8 @@
 #!/bin/bash
 # Objetivos:
-# . Disparar procesos
-# . Arranca el dominio , y se usa para que un comando invoque a otro
+# . Detener procesos
 # Restricciones:
-# . No se puede arrancar un proceso que ya esta corriendo
+# . No se puede arrancar un proceso que no existe WTF
 # . No se puede arrancar un proceso si no se inicializo el ambiente
 
 # Parametro1 : Nombre del proceso
@@ -17,11 +16,13 @@ ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "Start.sh" | g
 # Del filtro anterior , me quedo con la primer linea , y de la primer linea saco los primeros 4 bytes 
 PIDproceso=$(echo $ProcesosCorriendo | head -n 1 | head -c 4)
 if [ "$PIDproceso" == "" ]; then
-	# Inicio el proceso
-	bash $Proceso &
-else
-	echo "proceso corriendo"
+	echo "proceso no existe"
 	#Escribir en el log que el archivo se esta ejecutando
+else
+	echo "$PIDproceso"
+	# Detengo el proceso
+	kill "$PIDproceso"
 fi
 
  
+echo "" | head -n 1 | head -c 4
