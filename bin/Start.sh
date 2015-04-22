@@ -21,6 +21,7 @@ if [ "$PIDproceso" == "" ]; then
 	bash $Proceso &
 else
 	#Escribir en el log que el archivo se esta ejecutando
+	echo "Proceso ya iniciado"
 fi
 
  
