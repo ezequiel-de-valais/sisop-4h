@@ -22,6 +22,7 @@ if [ "$PIDproceso" == "" ]; then
 else
 	echo "proceso corriendo"
 	#Escribir en el log que el archivo se esta ejecutando
+	echo "Proceso ya iniciado"
 fi
 
  
