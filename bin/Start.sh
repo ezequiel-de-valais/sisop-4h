@@ -19,10 +19,9 @@ PIDproceso=$(echo $ProcesosCorriendo | head -n 1 | head -c 5)
 if [ "$PIDproceso" == "" ]; then
 	# Inicio el proceso
 	bash $Proceso &
+	./glog "Start.sh" "Inicio de Demonio" INFO
 else
-	echo "proceso corriendo"
-	#Escribir en el log que el archivo se esta ejecutando
-	echo "Proceso ya iniciado"
+	./glog "Start.sh" "Demonio ya iniciado" WAR
 fi
 
  

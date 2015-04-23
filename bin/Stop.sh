@@ -16,7 +16,7 @@ ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "Stop.sh" | gr
 PIDproceso=$(echo "$ProcesosCorriendo" | head -n 1 | head -c 5)
 if [ "$PIDproceso" == "" ]; then
 
-	./glog $Command "proceso n existe" WAR
+	./glog $Command "proceso no existe" WAR
 else
 	./glog $Command "matar proceso" INFO
 	kill "$PIDproceso"
