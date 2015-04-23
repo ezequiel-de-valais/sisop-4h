@@ -1,19 +1,21 @@
 #!/bin/bash
-# Comando "Glog"
-# arg1
-#   comando
-# arg2
-#   Mensaje
-# arg3 (opcional)
-#   tipo de mensaje. 
-#   default: debug
-#   opciones: debug info warn error
+# input
+#   Comando "Glog"
+#   arg1
+#     comando
+#   arg2
+#     Mensaje
+#   arg3 (opcional)
+#     tipo de mensaje. 
+#     default: INFO
+#     opciones: INFO WAR ERR
+# output
+#   archivo de log
 
-#./bin/glog auxiliarCommand mensaje1 debug
-#./bin/glog anOtherCommand mensaje2 error
-#./bin/glog auxiliarCommand mensaje3
-
-#TODO: documentar, documentar logsize, help menu, 
+#ejemplo de uso
+#./glog auxiliarCommand mensaje1 WAR
+#./glog anOtherCommand mensaje2 ERR
+#./glog auxiliarCommand mensaje3
 
 
 
@@ -35,12 +37,8 @@ generar_log () {
 
     TIPOS=("INFO" "WAR" "ERR")
     TIPO_DEFAULT="INFO"
-
     TIMESTAMP=`date +"%Y-%m-%d_%H-%M-%S"`
-
     array_contains TIPOS $TIPO  && TIPO=$TIPO || TIPO=$TIPO_DEFAULT
-
-
     AUTOR=$(whoami);
     log="$TIMESTAMP - $TIPO - $AUTOR - $COMANDO - $MENSAJE"
 
@@ -61,6 +59,11 @@ controlar_crecimiento_logfile (){
 }
 ############################################
 
+if [ $# -gt 3 -o $# -lt 2 ]
+then
+    ./glog glog "$1 - Cantidad de parametros no valida." ERROR
+    exit 1
+fi
 
 COMANDO="$1"
 MENSAJE="$2"
@@ -68,7 +71,7 @@ TIPO="$3"
 
 LOGSIZE="2000"
 LOGSAVE="100" #logs que se guardan al reiniciar archivo
-LOGDIR="/home/pc/Escritorio/TPSO/Git/sisop-4h/log/"
+LOGDIR="/home/ezequiel/documents/facultad/sistemasOperativos/sisop-4h/log/"
 mkdir -p "$LOGDIR"
 LOGFILE="${LOGDIR}$COMANDO.log"
 GENERAL_LOGFILE="${LOGDIR}salida.log"
@@ -76,3 +79,4 @@ GENERAL_LOGFILE="${LOGDIR}salida.log"
 generar_log
 controlar_crecimiento_logfile
 
+exit 0
