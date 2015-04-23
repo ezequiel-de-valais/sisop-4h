@@ -15,6 +15,7 @@ ciclo=0
 while true
 do
 	let ciclo=ciclo+1
+	./glog "RecPro.sh" "ciclo numero : $ciclo" INFO
 	#Escribir el numero de ciclo en el LOG
 	#Validar los archivos en el directorio de novedades
 	#Si corresponde disparar ProPro
