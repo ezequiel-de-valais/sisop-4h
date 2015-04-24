@@ -48,11 +48,15 @@ generar_log () {
 
 
 controlar_crecimiento_logfile (){
-
-    LOGFILE_SIZE=`wc -l "$LOGFILE" | xargs | cut -f1 -d' '`
-
+    #TODO: crecimiento se debe controlar con peso en kb (pag 24, punto 17)
+    #LOGFILE_SIZE=`wc -l "$LOGFILE" | xargs | cut -f1 -d' '`
+    echo $LOGFILE
+    LOGFILE_SIZE=$(du --summarize --block-size=1024  "$LOGFILE" | cut -d"/" -f1 |  sed 's/^[ \t]*//;s/[ \t]*$//')
+    echo "log peso $LOGFILE_SIZE"
     if [[ "$LOGFILE_SIZE" -gt $LOGSIZE ]]; then
-        tail -$LOGSAVE "$LOGFILE" > "${LOGFILE}save"
+        LINEAS=$(wc -l "$LOGFILE" | cut -f1 -d ' ')
+        LINEAS_QUE_QUEDAN=$(expr $LINEAS / 2)
+        tail -$LINEAS_QUE_QUEDAN "$LOGFILE" > "${LOGFILE}save"
         mv "${LOGFILE}save" "$LOGFILE"
     fi
 
@@ -68,9 +72,11 @@ fi
 COMANDO="$1"
 MENSAJE="$2"
 TIPO="$3"
-
-LOGSIZE="2000"
-LOGSAVE="100" #logs que se guardan al reiniciar archivo
+#TODO: Lo importante es que SIEMPRE adopte un mecanismo para mantener controlado el tamaño de un
+#log. Puede adoptar cualquier mecanismo, aclare en Hipótesis y Aclaraciones Globales cual fue el
+#que adoptó
+LOGSIZE="100"
+#LOGSAVE="50" #logs que se guardan al reiniciar archivo
 LOGDIR="/home/ezequiel/documents/facultad/sistemasOperativos/sisop-4h/log/"
 mkdir -p "$LOGDIR"
 LOGFILE="${LOGDIR}$COMANDO.log"
