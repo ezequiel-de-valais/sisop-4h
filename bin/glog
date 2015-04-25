@@ -77,7 +77,7 @@ TIPO="$3"
 #que adoptó
 LOGSIZE="100"
 #LOGSAVE="50" #logs que se guardan al reiniciar archivo
-LOGDIR="/home/ezequiel/documents/facultad/sistemasOperativos/sisop-4h/log/"
+LOGDIR="/home/pc/Escritorio/TPSO/Git/sisop-4h/bin/log/"
 mkdir -p "$LOGDIR"
 LOGFILE="${LOGDIR}$COMANDO.log"
 GENERAL_LOGFILE="${LOGDIR}salida.log"

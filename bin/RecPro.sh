@@ -10,6 +10,41 @@
 # Tiempo que duerme
 intervalo=10
 
+NOVEDADES="$GRUPO/$NOVEDIR/"
+EMISORES="$GRUPO/$MAEDIR/emisores.mae"
+NORMAS="$GRUPO/$MAEDIR/normas.mae"
+GESTIONES="$GRUPO/$MAEDIR/gestiones.mae"
+ACEPTADOS="$GRUPO/$ACEPDIR/"
+RECHAZADOS="$GRUPO/$RECHDIR/"
+
+# Devuelve en la variable cantidad_archivos
+# la cantidad en el directorio $NOVEDADES
+function hay_archivos() {
+	cantidad_archivos=$(ls -1 $NOVEDADES | wc -l)
+}
+
+# Valida el formato de los nombres , moviendo los que no cumplen a rechazados
+function validar_formato_nombre (){
+	
+	archivos_a_rechazados=$(ls -1 $NOVEDADES | grep -v "^.*_.*_.*_.*_.*$") 
+	for archivo in ($archivos_a_rechazados);do
+		./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
+	done
+}
+
+# Valida que sean archivos de texto , los que hay en el directorio $NOVEDADES
+function validar_tipo_archivos (){
+	for archivo in $(ls -1 $NOVEDADES);
+	do
+		if [ ! -f $archivo ];then
+			./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
+		fi
+}
+
+
+
+
+
 ciclo=0
 
 while true
@@ -18,6 +53,14 @@ do
 	./glog "RecPro.sh" "ciclo numero : $ciclo" INFO
 	#Escribir el numero de ciclo en el LOG
 	#Validar los archivos en el directorio de novedades
-	#Si corresponde disparar ProPro
+	hay_archivos
+	if [ $cantidad_archivos -gt 0 ];then
+		#Validacion de los nombres
+		validar_tipo_archivos
+		validar_formato_nombre
+	else 
+		#Ir a directorio de ACEPTADOS
+		#Invocar a ProPro	
+	fi
 	sleep $intervalo
 done
