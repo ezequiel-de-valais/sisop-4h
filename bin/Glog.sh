@@ -8,7 +8,7 @@
 #   arg3 (opcional)
 #     tipo de mensaje. 
 #     default: INFO
-#     opciones: INFO WAR ERR
+#     opciones: INF WAR ERR
 # output
 #   archivo de log
 
@@ -35,8 +35,8 @@ array_contains () {
 
 generar_log () {
 
-    TIPOS=("INFO" "WAR" "ERR")
-    TIPO_DEFAULT="INFO"
+    TIPOS=("INF" "WAR" "ERR")
+    TIPO_DEFAULT="INF"
     TIMESTAMP=`date +"%Y-%m-%d_%H-%M-%S"`
     array_contains TIPOS $TIPO  && TIPO=$TIPO || TIPO=$TIPO_DEFAULT
     AUTOR=$(whoami);
@@ -50,9 +50,9 @@ generar_log () {
 controlar_crecimiento_logfile (){
     #TODO: crecimiento se debe controlar con peso en kb (pag 24, punto 17)
     #LOGFILE_SIZE=`wc -l "$LOGFILE" | xargs | cut -f1 -d' '`
-    echo $LOGFILE
-    LOGFILE_SIZE=$(du --summarize --block-size=1024  "$LOGFILE" | cut -d"/" -f1 |  sed 's/^[ \t]*//;s/[ \t]*$//')
-    echo "log peso $LOGFILE_SIZE"
+    #echo $LOGFILE
+    LOGFILE_SIZE=$(du --summarize --block-size=1024  "$LOGFILE" | cut -f1 |  sed 's/^[ \t]*//;s/[ \t]*$//')
+    #echo "log peso $LOGFILE_SIZE"
     if [[ "$LOGFILE_SIZE" -gt $LOGSIZE ]]; then
         LINEAS=$(wc -l "$LOGFILE" | cut -f1 -d ' ')
         LINEAS_QUE_QUEDAN=$(expr $LINEAS / 2)
@@ -75,9 +75,14 @@ TIPO="$3"
 #TODO: Lo importante es que SIEMPRE adopte un mecanismo para mantener controlado el tamaño de un
 #log. Puede adoptar cualquier mecanismo, aclare en Hipótesis y Aclaraciones Globales cual fue el
 #que adoptó
-LOGSIZE="100"
+LOGSIZE=$LOGSIZE #"100"
 #LOGSAVE="50" #logs que se guardan al reiniciar archivo
+<<<<<<< HEAD:bin/glog
 LOGDIR="/home/pc/Escritorio/TPSO/Git/sisop-4h/bin/log/"
+=======
+LOGDIR=$LOGDIR #"log/"
+cd ..
+>>>>>>> 83cad8adc4444c29a5b41288212e7bd0d99251d6:bin/Glog.sh
 mkdir -p "$LOGDIR"
 LOGFILE="${LOGDIR}$COMANDO.log"
 GENERAL_LOGFILE="${LOGDIR}salida.log"
