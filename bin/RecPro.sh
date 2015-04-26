@@ -27,8 +27,9 @@ function hay_archivos() {
 function validar_formato_nombre (){
 	
 	archivos_a_rechazados=$(ls -1 $NOVEDADES | grep -v "^.*_.*_.*_.*_.*$") 
-	for archivo in ($archivos_a_rechazados);do
+	for archivo in $(cat archivos_a_rechazados);do
 		./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
+		#escribir log
 	done
 }
 
@@ -38,6 +39,7 @@ function validar_tipo_archivos (){
 	do
 		if [ ! -f $archivo ];then
 			./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
+			#Escribir log
 		fi
 }
 
