@@ -33,7 +33,7 @@ log() {
 		$tipo="INFO"
 	fi
 	
-	#bin/glog "$script" "$mensaje" "$tipo"
+	#bin/Glog.sh "$script" "$mensaje" "$tipo"
 }
 #####################
 mostrarYLoguear(){
@@ -491,9 +491,10 @@ inicializarInstalacion(){
 #Inicio Script
 clear
 echo "Inicio de Ejecución de InsPro"
-chmod 700 "bin/glog"
+chmod 700 "bin/Glog.sh"
 
 #INICIALIZO LOG
+export GRUPO
 mostrarYLoguear "Log de la instalación: /conf/InsPro.log"	
 mostrarYLoguear "Directorio predefinido de Configuración: $CONFDIR"
 
