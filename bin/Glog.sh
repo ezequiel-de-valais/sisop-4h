@@ -11,6 +11,9 @@
 #     opciones: INF WAR ERR
 # output
 #   archivo de log
+# precondiciones
+# instalacion debio exportar variable GRUPO
+# o el init debio exportar LOGDIR
 
 #ejemplo de uso
 #./glog auxiliarCommand mensaje1 WAR
@@ -63,11 +66,11 @@ controlar_crecimiento_logfile (){
 }
 ############################################
 
-if [ $# -gt 3 -o $# -lt 2 ]
-then
-    ./glog glog "$1 - Cantidad de parametros no valida." ERROR
-    exit 1
-fi
+
+#if [[ $# -gt 3 -o $# -lt 2 ]]; then
+#    ./glog glog "$1 - Cantidad de parametros no valida." ERR
+#    exit 1
+#fi
 
 COMANDO="$1"
 MENSAJE="$2"
@@ -75,17 +78,26 @@ TIPO="$3"
 #TODO: Lo importante es que SIEMPRE adopte un mecanismo para mantener controlado el tamaño de un
 #log. Puede adoptar cualquier mecanismo, aclare en Hipótesis y Aclaraciones Globales cual fue el
 #que adoptó
-LOGSIZE=$LOGSIZE #"100"
-#LOGSAVE="50" #logs que se guardan al reiniciar archivo
-<<<<<<< HEAD:bin/glog
-LOGDIR="/home/pc/Escritorio/TPSO/Git/sisop-4h/bin/log/"
-=======
-LOGDIR=$LOGDIR #"log/"
-cd ..
->>>>>>> 83cad8adc4444c29a5b41288212e7bd0d99251d6:bin/Glog.sh
+
+# Si es del instalador va en otro lado
+if [[ -z $LOGDIR ]]; then
+    if [[ -z $GRUPO ]]; then
+        #echo "NO SE EXPORTO LA VARIABLE GRUPO NI LOGDIR"
+        exit 1
+    fi
+    LOGDIR="${GRUPO}/conf/" #conf debe existir
+    LOGSIZE=400
+else
+    if [[ -z $LOGSIZE ]]; then
+        LOGSIZE=400
+    fi
+fi
+
+#echo "LOGSIZE=$LOGSIZE"
 mkdir -p "$LOGDIR"
+
 LOGFILE="${LOGDIR}$COMANDO.log"
-GENERAL_LOGFILE="${LOGDIR}salida.log"
+#echo "LOGFILE: $LOGFILE"
 
 generar_log
 controlar_crecimiento_logfile
