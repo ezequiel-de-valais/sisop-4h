@@ -1,9 +1,8 @@
 #!/bin/bash
 
 #===========================================================
-# ARCHIVO: IniPro.sh
 #
-# FIRMA: . IniPro.sh
+# ARCHIVO: IniPro.sh
 #
 # DESCRIPCION: Prepara el entorno de ejecución del TP
 # 
@@ -13,7 +12,8 @@
 #===========================================================
 
 # Llama al log para grabar
-# $1 = mensaje, $2 = tipo (INF WAR ERR)
+# $1 = mensaje
+# $2 = tipo (INF WAR ERR)
 
 function grabarLog {
 
@@ -31,17 +31,17 @@ function chequearVariables {
 
        if [ -z "$res" ]; then
 
-         echo -e "Falta la variable de ambiente $var, agregando..."
+         #echo -e "Falta la variable de ambiente $var, agregando..."
 
          setVariablesDeConfiguracion $var
 
-         echo -e "Variable $var ahora esta agregada"
+         #echo -e "Variable $var ahora esta agregada"
 
-       else
-         echo -e "La variable de ambiente $var=$res existe"
+       #else
+         #echo -e "La variable de ambiente $var=$res existe"
        fi      
    done
-   echo -e 
+   #echo -e 
 }
 
 # Lee las variables de Config del archivo InsPro.conf
@@ -60,21 +60,21 @@ function chequearComandos {
  for i in ${comandos[*]}
    do
      if [ -f $BINDIR/$i ]; then
-          echo -e "El comando $i existe"
+          #echo -e "El comando $i existe"
  
-          if [ -x $BINDIR/$i ]; then 
-            echo -e "y tiene permisos de ejecucion"
-          else 
+          if ! [ -x $BINDIR/$i ]; then 
+            #echo -e "y tiene permisos de ejecucion"
+          #else 
             chmod 777 $BINDIR/$i
-            echo -e "`ls -l $BINDIR/$i`"
+            #echo -e "`ls -l $BINDIR/$i`"
           fi
          
      else
-        echo -e "El comando $i no existe" 
+        #echo -e "El comando $i no existe" 
         grabarLog "El comando $i no existe." "ERR"
      fi
    done  
-   echo -e 
+   #echo -e 
 }
 
 # Chequea que existan los maestros en la carpeta MAEDIR, 
@@ -85,21 +85,21 @@ function chequearMaestros {
  for i in ${maestros[*]}
    do
      if [ -f $MAEDIR/$i ]; then
-          echo -e "El archivo maestro $i existe"
+          #echo -e "El archivo maestro $i existe"
  
-          if [ -r $MAEDIR/$i ] &&  ! [ -w $MAEDIR/$i ]; then 
-            echo -e "y tiene permisos de lectura, pero no escritura"
-          else 
+          if ! ([ -r $MAEDIR/$i ] && ! [ -w $MAEDIR/$i ]) ; then
+            #echo -e "y tiene permisos de lectura, pero no escritura"
+          #else 
             chmod 444 $MAEDIR/$i
-            echo -e `ls -l $MAEDIR/$i`
+            #echo -e `ls -l $MAEDIR/$i`
           fi
          
      else
-        echo -e "El archivo maestro $i no existe" 
+        #echo -e "El archivo maestro $i no existe" 
         grabarLog "El maestro $i no existe." "ERR"
      fi
    done  
-   echo -e 
+   #echo -e 
 }
 
 # Chequea que existan las tablas en la carpeta MAEDIR/tab, 
@@ -110,21 +110,21 @@ function chequearTablas {
  for i in ${tablas[*]}
    do
      if [ -f $MAEDIR/tab/$i ]; then
-          echo -e "La tabla $i existe"
+          #echo -e "La tabla $i existe"
  
-          if [ -r $MAEDIR/tab/$i ] &&  ! [ -w $MAEDIR/tab/$i ]; then 
-            echo -e "y tiene permisos de lectura, pero no escritura"
-          else 
+          if ! ([ -r $MAEDIR/tab/$i ] && ! [ -w $MAEDIR/tab/$i ]); then 
+            #echo -e "y tiene permisos de lectura, pero no escritura"
+          #else 
             chmod 444 $MAEDIR/tab/$i
-            echo -e `ls -l $MAEDIR/tab/$i`
+            #echo -e `ls -l $MAEDIR/tab/$i`
           fi
          
      else
-        echo -e "La tabla $i no existe" 
+        #echo -e "La tabla $i no existe" 
         grabarLog "La tabla $i no existe." "ERR"
      fi
    done  
-   echo -e 
+   #echo -e 
 }
 
 # Chequea que la carpeta donde se encuentran los comandos, este incluido en la variable PATH,
@@ -136,17 +136,18 @@ function chequearPaths {
 
   if [ -z "$ejec" ]; then
 
-    echo -e "No esta el path de ejecutables, agregando..."
+    #echo -e "No esta el path de ejecutables, agregando..."
     
     export PATH=$PATH:$BINDIR
     
-    echo -e "Agregado\n"
+    #echo -e "Agregado\n"
 
-  else
+  #else
 
-    echo -e "El path de ejecutables esta seteado"
+    #echo -e "El path de ejecutables esta seteado"
     
   fi 
+  #echo -e
 }
 
 # Chequea si el proceso RecPro ya esta corriendo
@@ -180,6 +181,66 @@ function lanzarRecPro {
 
    done
   return 0
+}
+
+# Muestra el mensaje de finalizacion de Inicializacion
+
+function mostrarMensajeInstalacionFinalizada {
+
+	CONFDIR="$GRUPO""conf"
+	dirconf=`ls $CONFDIR`
+	dirbin=`ls $BINDIR`
+	dirmae=`ls -R $MAEDIR`
+	dirlog=`ls $LOGDIR`
+
+	procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
+
+	mensaje="
+TP SO7508 Primer Cuatrimestre 2015. Tema H Copyright (c) Grupo 04.
+
+Directorio de Configuración: $CONFDIR
+
+Archivos: 
+$dirconf
+
+
+Directorio de Ejecutables: $BINDIR
+
+Archivos: 
+$dirbin
+
+
+Directorio de Maestros y Tablas: $MAEDIR
+
+Archivos: 
+$dirmae
+
+
+Directorio de recepción de documentos para protocolización: $NOVEDIR
+
+Directorio de Archivos Aceptados: $ACEPDIR
+
+Directorio de Archivos Rechazados: $RECHDIR
+
+Directorio de Archivos Protocolizados: $PROCDIR
+
+Directorio para informes y estadísticas: $INFODIR
+
+Nombre para el repositorio de duplicados: $DUPCDIR
+
+Directorio para Archivos de Log: $LOGDIR
+
+Archivos: 
+$dirlog
+
+
+Estado del Sistema: INICIALIZADO
+
+Demonio corriendo bajo el no.: <$procssid> "
+
+	grabarLog "$mensaje" "INF"
+	echo "$mensaje"
+
 }
 
 #Funcion principal
@@ -216,19 +277,20 @@ function main {
 	   Start.sh "RecPro.sh"
 	   msj="\n-Usted ha elegido arrancar RecPro, \npara frenarlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Stop.sh RecPro.sh\n"
 	   echo -e $msj
-	   procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | cut -d " " -f2)
+	   procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 	   echo -e "proc: $procssid"
 	   grabarLog "proc: $procssid" "INF"
 	else
 	   msj="\n-RecPro ya iniciado, \npara frenarlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Stop.sh RecPro.sh\n"
 	   echo -e $msj
 	   grabarLog "RecPro ya iniciado" "ERR"
-	   procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | cut -d " " -f2)
+	   procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 	   echo -e "proc: $procssid"
 	   grabarLog "RecPro.sh proc: $procssid" "ERR"
 	fi
-   fi
+      fi
       export INICIALIZADO="true"
+      mostrarMensajeInstalacionFinalizada
    fi
 
 }
