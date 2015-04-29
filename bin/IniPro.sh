@@ -127,6 +127,61 @@ function chequearTablas {
    echo -e 
 }
 
+# Chequea que la carpeta donde se encuentran los comandos, este incluido en la variable PATH,
+# para su correcta ejecucion, sino lo setea
+
+function chequearPaths {
+   
+   ejec=`echo $PATH | grep $BINDIR`
+
+  if [ -z "$ejec" ]; then
+
+    echo -e "No esta el path de ejecutables, agregando..."
+    
+    export PATH=$PATH:$BINDIR
+    
+    echo -e "Agregado\n"
+
+  else
+
+    echo -e "El path de ejecutables esta seteado"
+    
+  fi 
+}
+
+# Chequea si el proceso RecPro ya esta corriendo
+
+function chequearRecPro {
+
+ resultado=`ps -A | grep "RecPro.sh"`
+
+ if [ -z "$resultado" ]; then
+   return 0
+ else
+   return 1
+ fi
+}
+
+# Pregunta si se desea iniciar el comando RecPro, y actua segun la respuesta. 
+
+function lanzarRecPro {
+ 
+  echo "“Desea efectuar la activación de RecPro?” Si – No"
+  read resp
+
+  while [ "$resp" != "Si" ]
+   do
+     if [ "$resp" == "No" ]; then
+       return 1
+     fi
+
+     echo "Ingrese una respuesta valida"
+     read resp
+
+   done
+  return 0
+}
+
 #Funcion principal
 
 function main {
@@ -146,8 +201,20 @@ function main {
       echo -e "Comenzando a inicializar el ambiente."
       chequearVariables
       chequearComandos
+      chequearPaths
       chequearMaestros
       chequearTablas
+
+      lanzarRecPro
+      if [ $? == 1 ]; then
+         msj="\n-Usted ha elegido no arrancar RecPro, \npara hacerlo manualmente debe hacerlo de la siguiente manera: \nUso: RecPro.sh\n"
+         echo -e $msj
+         grabarLog "I" "$msj" 
+      else
+	Start.sh "RecPro.sh"
+	procssid=$(ps | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
+	echo "proc: $procssid"
+   fi
       export INICIALIZADO="true"
    fi
 

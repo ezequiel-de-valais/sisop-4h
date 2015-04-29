@@ -9,17 +9,17 @@
 
 # Tiempo que duerme
 intervalo=10
-GRUPO=/home/pc/Escritorio/TPSO/Git/sisop-4h
-MAEDIR=20115-1C-Datos/maestros
-NOVEDIR=20115-1C-Datos/
-ACEPDIR=bin/aceptados
-RECHDIR=bin/rechazados
-NOVEDADES="$GRUPO/$NOVEDIR/"
-EMISORES="$GRUPO/$MAEDIR/emisores.mae"
-NORMAS="$GRUPO/$MAEDIR/normas.mae"
-GESTIONES="$GRUPO/$MAEDIR/gestiones.mae"
-ACEPTADOS="$GRUPO/$ACEPDIR/"
-RECHAZADOS="$GRUPO/$RECHDIR/"
+#GRUPO=/home/pc/Escritorio/TPSO/Git/sisop-4h
+#MAEDIR=20115-1C-Datos/maestros
+#NOVEDIR=20115-1C-Datos/
+#ACEPDIR=bin/aceptados
+#RECHDIR=bin/rechazados
+#NOVEDADES="$GRUPO/$NOVEDIR/"
+#EMISORES="$GRUPO/$MAEDIR/emisores.mae"
+#NORMAS="$GRUPO/$MAEDIR/normas.mae"
+#GESTIONES="$GRUPO/$MAEDIR/gestiones.mae"
+#ACEPTADOS="$GRUPO/$ACEPDIR/"
+#RECHAZADOS="$GRUPO/$RECHDIR/"
 
 # Devuelve en la variable cantidad_archivos
 # la cantidad en el directorio $NOVEDADES
