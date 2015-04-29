@@ -153,7 +153,7 @@ function chequearPaths {
 
 function chequearRecPro {
 
- resultado=`ps -A | grep "RecPro.sh"`
+ resultado=`ps ax | grep -v $$ | grep -v "grep" | grep "RecPro.sh"`
 
  if [ -z "$resultado" ]; then
    return 0
@@ -207,13 +207,26 @@ function main {
 
       lanzarRecPro
       if [ $? == 1 ]; then
-         msj="\n-Usted ha elegido no arrancar RecPro, \npara hacerlo manualmente debe hacerlo de la siguiente manera: \nUso: RecPro.sh\n"
-         echo -e $msj
-         grabarLog "I" "$msj" 
+	msj="\n-Usted ha elegido no arrancar RecPro, \npara hacerlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Start.sh RecPro.sh\n"
+	echo -e $msj
+	grabarLog "$msj" "INF"
       else
-	Start.sh "RecPro.sh"
-	procssid=$(ps | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
-	echo "proc: $procssid"
+	chequearRecPro
+	if [ $? == 0 ]; then
+	   Start.sh "RecPro.sh"
+	   msj="\n-Usted ha elegido arrancar RecPro, \npara frenarlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Stop.sh RecPro.sh\n"
+	   echo -e $msj
+	   procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | cut -d " " -f2)
+	   echo -e "proc: $procssid"
+	   grabarLog "proc: $procssid" "INF"
+	else
+	   msj="\n-RecPro ya iniciado, \npara frenarlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Stop.sh RecPro.sh\n"
+	   echo -e $msj
+	   grabarLog "RecPro ya iniciado" "ERR"
+	   procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | cut -d " " -f2)
+	   echo -e "proc: $procssid"
+	   grabarLog "RecPro.sh proc: $procssid" "ERR"
+	fi
    fi
       export INICIALIZADO="true"
    fi

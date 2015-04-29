@@ -13,7 +13,7 @@ Proceso=$1
 Command="Stop.sh"
 ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "Stop.sh" | grep $Proceso)
 # Del filtro anterior , me quedo con la primer linea , y de la primer linea saco los primeros 4 bytes 
-PIDproceso=$(echo "$ProcesosCorriendo" | cut -d " " -f1)
+PIDproceso=$(echo "$ProcesosCorriendo" | cut -d " " -f2)
 if [ "$PIDproceso" == "" ]; then
 
 	./Glog.sh $Command "proceso no existe" WAR
