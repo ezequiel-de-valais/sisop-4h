@@ -14,12 +14,12 @@ intervalo=10
 #NOVEDIR=20115-1C-Datos/
 #ACEPDIR=bin/aceptados
 #RECHDIR=bin/rechazados
-#NOVEDADES="$GRUPO/$NOVEDIR/"
-#EMISORES="$GRUPO/$MAEDIR/emisores.mae"
-#NORMAS="$GRUPO/$MAEDIR/normas.mae"
-#GESTIONES="$GRUPO/$MAEDIR/gestiones.mae"
-#ACEPTADOS="$GRUPO/$ACEPDIR/"
-#RECHAZADOS="$GRUPO/$RECHDIR/"
+NOVEDADES="$GRUPO/$NOVEDIR/"
+EMISORES="$GRUPO/$MAEDIR/emisores.mae"
+NORMAS="$GRUPO/$MAEDIR/normas.mae"
+GESTIONES="$GRUPO/$MAEDIR/gestiones.mae"
+ACEPTADOS="$GRUPO/$ACEPDIR/"
+RECHAZADOS="$GRUPO/$RECHDIR/"
 
 # Devuelve en la variable cantidad_archivos
 # la cantidad en el directorio $NOVEDADES
@@ -38,8 +38,8 @@ function validar_formato_nombre (){
 
 # Valida que sean archivos de texto , los que hay en el directorio $NOVEDADES
 function validar_tipo_archivos (){
-	for archivo in $(ls -1 $NOVEDADES);do
-		if [ ! -f $archivo ];then
+	for archivo in $(ls -1 "$NOVEDADES");do
+		if [ $(file "$NOVEDADES/$archivo" | grep -c "ASCII text") != 1 ];then
 			./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
 			#Escribir log
 		fi
@@ -47,19 +47,43 @@ function validar_tipo_archivos (){
 }
 
 
+
 ciclo=0
 
 while true
 do
 	let ciclo=ciclo+1
-	#./glog "RecPro.sh" "ciclo numero : $ciclo" INFO
+	./Glog "RecPro.sh" "ciclo numero : $ciclo" INFO
 	#Escribir el numero de ciclo en el LOG
 	#Validar los archivos en el directorio de novedades
 	hay_archivos
 	if [ $cantidad_archivos -gt 0 ];then
 		#Validacion de los nombres
-		#validar_tipo_archivos
+		validar_tipo_archivos
 		validar_formato_nombre
+		#Validaciones de cada campo
+		listaArchivos=$(ls -1 $NOVEDADES)
+		for archivo in $listaArchivos ; do
+			gestion=$(echo $archivo | cut -d "_" -f 1)
+			norma=$(echo $archivo | cut -d "_" -f 2)
+			emisor=$(echo $archivo | cut -d "_" -f 3)
+			fecha=$(echo $archivo | cut -d "_" -f 5)
+			if [ $(grep -c "^$gestion;.*;.*;.*;.*$" "$GESTIONES") -eq 0 ];then
+				./Mover.sh "$NOVEDADES/$archivo" "RECHAZADOS"
+				#Loggear
+			elif [ $(grep -c "^$norma;.*;.*$" "$NORMAS") -eq 0 ];then
+				./Mover.sh "$NOVEDADES/$archivo" "RECHAZADOS"
+				#Loggear
+			elif [ $(grep -c "^$emisor;.*;.*;.*$" "$EMISORES") -eq 0 ];then
+				./Mover.sh "$NOVEDADES/$archivo" "RECHAZADOS"
+				#Loguear
+			else 
+				mkdir -p "ACEPTADOS/$gestion"
+				./Mover.sh "$NOVEDADES/$archivo" "ACEPTADOS/$gestion"
+				#Loggear
+			fi
+		done
+
 	else 
 		#Ir a directorio de ACEPTADOS
 		#Invocar a ProPro
