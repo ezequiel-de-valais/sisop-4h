@@ -47,6 +47,34 @@ function validar_tipo_archivos (){
 }
 
 
+function validar_fecha (){
+	#Obtengo fecha inicial y final , de la gestion
+	fechaInicial=$(grep "^$gestion;.*;.*;.*;.*$" "$GESTIONES" | cut -d ";" -f 2 | sed s-"/"--g)
+	fechaFinal=$(grep "^$gestion;.*;.*;.*;.*$" "$GESTIONES" | cut -d ";" -f 3 | sed s-"/"--g)
+	fechaValidar=$fecha
+	#Corto en dia,mes y año cada una de las fechas
+	di=$(echo $fechaInicial | cut -d "/" -f 1)
+	df=$(echo $fechaFinal | cut -d "/" -f 1)
+	d3=$(echo $fechaValidar | cut -d "/" -f 1)
+	mi=$(echo $fechaInicial | cut -d "/" -f 2)
+	mf=$(echo $fechaFinal | cut -d "/" -f 2)
+	m3=$(echo $fechaValidar | cut -d "/" -f 2)
+	ai=$(echo $fechaInicial | cut -d "/" -f 3)
+	af=$(echo $fechaFinal | cut -d "/" -f 3)
+	a3=$(echo $fechaValidar | cut -d "/" -f 3)
+	#Invierto el orden de las fechas para poder compararlas (año/mes/dia)
+	fechaInicial="$ai$mi$di"
+	fechaFinal="$af$mf$df"
+	fechaValidar="$a3$m3$d3"
+	if [[ "$fechaInicial" > "$fechaValidar" ]];then
+		return 1
+	if [[ "$fechaFinal" < "$fechaValidar" ]]; then
+		return 1
+	fi	
+	return 0
+}
+
+
 
 ciclo=0
 
@@ -70,7 +98,7 @@ do
 			fecha=$(echo $archivo | cut -d "_" -f 5)
 			if [ $(grep -c "^$gestion;.*;.*;.*;.*$" "$GESTIONES") -eq 0 ];then
 				./Mover.sh "$NOVEDADES/$archivo" "RECHAZADOS"
-				#Loggear
+				#Loggear	
 			elif [ $(grep -c "^$norma;.*;.*$" "$NORMAS") -eq 0 ];then
 				./Mover.sh "$NOVEDADES/$archivo" "RECHAZADOS"
 				#Loggear
