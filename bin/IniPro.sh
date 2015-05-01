@@ -48,7 +48,7 @@ function chequearVariables {
 
 function setVariablesDeConfiguracion {
     
-    export $1=`grep "$1" "$CONFDIR/$confFile" | cut -d"=" -f 2`
+    export $1=`grep "$1" "$CONFDIR/$confFile" | cut -d":" -f 2`
 }
 
 # Chequea que existan los scripts en la carpeta BINDIR, 

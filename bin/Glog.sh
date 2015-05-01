@@ -45,7 +45,6 @@ generar_log () {
     AUTOR=$(whoami);
     log="$TIMESTAMP - $TIPO - $AUTOR - $COMANDO - $MENSAJE"
 
-    echo "$log" >> "$LOGFILE"
 
 }
 
@@ -79,15 +78,19 @@ TIPO="$3"
 #log. Puede adoptar cualquier mecanismo, aclare en Hipótesis y Aclaraciones Globales cual fue el
 #que adoptó
 
+generar_log
+#echo "LOG: $log"
 # Si es del instalador va en otro lado
 if [[ -z $LOGDIR ]]; then
     if [[ -z $GRUPO ]]; then
-        #echo "NO SE EXPORTO LA VARIABLE GRUPO NI LOGDIR"
+        echo "NO SE EXPORTO LA VARIABLE GRUPO NI LOGDIR"
         exit 1
     fi
     LOGDIR="${GRUPO}/conf/" #conf debe existir
     LOGSIZE=400
 else
+    #asumo GRUPO existe
+    LOGDIR="$GRUPO$LOGDIR/"
     if [[ -z $LOGSIZE ]]; then
         LOGSIZE=400
     fi
@@ -96,10 +99,12 @@ fi
 #echo "LOGSIZE=$LOGSIZE"
 mkdir -p "$LOGDIR"
 
+#LOGFILE="$GRUPO${LOGDIR}/$COMANDO.log"
 LOGFILE="${LOGDIR}$COMANDO.log"
-#echo "LOGFILE: $LOGFILE"
 
-generar_log
+#echo "LOGFILE: $LOGFILE"
+echo "$log" >> "$LOGFILE"
+
 controlar_crecimiento_logfile
 
 exit 0

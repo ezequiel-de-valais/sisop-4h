@@ -17,6 +17,8 @@ LOGDIR=""
 LOGSIZE=""
 
 
+mkdir "$CONFDIR"
+
 #Variables para el script
 RUTA_CONFIG="$CONFDIR/InsPro.conf"
 
@@ -33,7 +35,7 @@ log() {
 		$tipo="INFO"
 	fi
 	
-	#bin/Glog.sh "$script" "$mensaje" "$tipo"
+	bin/Glog.sh "$script" "$mensaje" "$tipo"
 }
 #####################
 mostrarYLoguear(){
@@ -489,12 +491,13 @@ inicializarInstalacion(){
 #########################
 #########################
 #Inicio Script
-clear
+
 echo "Inicio de Ejecución de InsPro"
-chmod 700 "bin/Glog.sh"
+#chmod 700 "bin/Glog.sh"
 
 #INICIALIZO LOG
 export GRUPO
+
 mostrarYLoguear "Log de la instalación: /conf/InsPro.log"	
 mostrarYLoguear "Directorio predefinido de Configuración: $CONFDIR"
 
