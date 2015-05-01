@@ -32,12 +32,14 @@ function validar_formato_nombre (){
 	archivos_a_rechazados=$(ls -1 $NOVEDADES | grep -v "^.*_.*_.*_.*_.*$") 
 	for archivo in $archivos_a_rechazados;do
 		./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
+		echo "Moviendo a rechazados por formato"
 		./Glog.sh "RecPro.sh" "Rechazado por formato invalido" INFO
 		#escribir log
 	done
 }
 
 # Valida que sean archivos de texto , los que hay en el directorio $NOVEDADES
+# NO FUNCIONA 
 function validar_tipo_archivos (){
 	for archivo in $(ls -1 "$NOVEDADES");do
 		if [ $(file "$NOVEDADES/$archivo" | grep -c "ASCII text") != 1 ];then
@@ -91,7 +93,7 @@ do
 	hay_archivos
 	if [ $cantidad_archivos -gt 0 ];then
 		#Validacion de los nombres
-		validar_tipo_archivos
+		#validar_tipo_archivos
 		validar_formato_nombre
 		#Validaciones de cada campo
 		listaArchivos=$(ls -1 $NOVEDADES)
