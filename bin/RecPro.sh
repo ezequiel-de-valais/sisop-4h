@@ -103,15 +103,15 @@ do
 			emisor=$(echo $archivo | cut -d "_" -f 3)
 			fecha=$(echo $archivo | cut -d "_" -f 5)
 			if [ $(grep -c "^$gestion;.*;.*;.*;.*$" "$GESTIONES") -eq 0 ];then
-				./Mover.sh "$NOVEDADES/$archivo" "RECHAZADOS"
+				./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
 				./Glog.sh "RecPro.sh" "$archivo rechazados gestion invalida" INFO
 				#Loggear	
 			elif [ $(grep -c "^$norma;.*;.*$" "$NORMAS") -eq 0 ];then
-				./Mover.sh "$NOVEDADES/$archivo" "RECHAZADOS"
+				./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
 				./Glog.sh "RecPro.sh" "$archivo rechazados cod_norma invalido" INFO
 				#Loggear
 			elif [ $(grep -c "^$emisor;.*;.*;.*$" "$EMISORES") -eq 0 ];then
-				./Mover.sh "$NOVEDADES/$archivo" "RECHAZADOS"
+				./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
 				./Glog.sh "RecPro.sh" "$archivo rechazados cod_emisor invalido" INFO
 				#Loguear
 			else 
