@@ -9,11 +9,11 @@
 
 # Tiempo que duerme
 intervalo=10
-GRUPO=/home/pc/Escritorio/TPSO/Git/sisop-4h
-MAEDIR=maestros
-NOVEDIR=20115-1C-Datos/
-ACEPDIR=bin/aceptados
-RECHDIR=bin/rechazados
+#GRUPO=/home/pc/Escritorio/TPSO/Git/sisop-4h
+#MAEDIR=maestros
+#NOVEDIR=20115-1C-Datos/
+#ACEPDIR=bin/aceptados
+#RECHDIR=bin/rechazados
 NOVEDADES="$GRUPO/$NOVEDIR/"
 EMISORES="$GRUPO/$MAEDIR/emisores.mae"
 NORMAS="$GRUPO/$MAEDIR/normas.mae"
