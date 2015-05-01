@@ -57,17 +57,21 @@ function validar_fecha (){
 	fechaValidar=$fecha
 	#Corto en dia,mes y año cada una de las fechas
 	di=$(echo $fechaInicial | cut -d "/" -f 1)
-	df=$(echo $fechaFinal | cut -d "/" -f 1)
 	d3=$(echo $fechaValidar | cut -d "-" -f 1)
 	mi=$(echo $fechaInicial | cut -d "/" -f 2)
-	mf=$(echo $fechaFinal | cut -d "/" -f 2)
 	m3=$(echo $fechaValidar | cut -d "-" -f 2)
 	ai=$(echo $fechaInicial | cut -d "/" -f 3)
-	af=$(echo $fechaFinal | cut -d "/" -f 3)
 	a3=$(echo $fechaValidar | cut -d "-" -f 3)
+	if [ "$fechaFinal" = "NULL" ];then
+		fechaFinal=$(date +"%Y%m%d")
+	else
+		df=$(echo $fechaFinal | cut -d "/" -f 1)
+		mf=$(echo $fechaFinal | cut -d "/" -f 2)
+		af=$(echo $fechaFinal | cut -d "/" -f 3)
+		fechaFinal="$af$mf$df"
+	fi
 	#Invierto el orden de las fechas para poder compararlas (año/mes/dia)
 	fechaInicial="$ai$mi$di"
-	fechaFinal="$af$mf$df"
 	fechaValidar="$a3$m3$d3"
 	if [[ "$fechaInicial" > "$fechaValidar" ]]; then
 		#Antes de la fecha inicial
