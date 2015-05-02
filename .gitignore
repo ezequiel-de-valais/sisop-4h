@@ -1,1 +1,6 @@
 log/*.log
+conf/*
+a_protocolizar/*
+novedades/*
+protocolizados/*
+rechazados/*
