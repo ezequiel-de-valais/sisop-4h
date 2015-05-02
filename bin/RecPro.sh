@@ -8,18 +8,13 @@
 # Duerme 
 
 # Tiempo que duerme
-intervalo=10
-#GRUPO=/home/pc/Escritorio/TPSO/Git/sisop-4h
-#MAEDIR=maestros
-#NOVEDIR=20115-1C-Datos/
-#ACEPDIR=bin/aceptados
-#RECHDIR=bin/rechazados
-NOVEDADES="$GRUPO/$NOVEDIR/"
-EMISORES="$GRUPO/$MAEDIR/emisores.mae"
-NORMAS="$GRUPO/$MAEDIR/normas.mae"
-GESTIONES="$GRUPO/$MAEDIR/gestiones.mae"
-ACEPTADOS="$GRUPO/$ACEPDIR/"
-RECHAZADOS="$GRUPO/$RECHDIR/"
+intervalo=3
+NOVEDADES="$GRUPO$NOVEDIR/"
+EMISORES="$GRUPO$MAEDIR/emisores.mae"
+NORMAS="$GRUPO$MAEDIR/normas.mae"
+GESTIONES="$GRUPO$MAEDIR/gestiones.mae"
+ACEPTADOS="$GRUPO$ACEPDIR/"
+RECHAZADOS="$GRUPO$RECHDIR/"
 
 # Devuelve en la variable cantidad_archivos
 # la cantidad en el directorio $NOVEDADES
@@ -55,30 +50,40 @@ function validar_fecha (){
 	fechaInicial=$(grep "^$gestion;.*;.*;.*;.*$" "$GESTIONES" | cut -d ";" -f 2 | sed s-"/"--g)
 	fechaFinal=$(grep "^$gestion;.*;.*;.*;.*$" "$GESTIONES" | cut -d ";" -f 3 | sed s-"/"--g)
 	fechaValidar=$fecha
+	
 	#Corto en dia,mes y año cada una de las fechas
-	di=$(echo $fechaInicial | cut -d "/" -f 1)
 	d3=$(echo $fechaValidar | cut -d "-" -f 1)
-	mi=$(echo $fechaInicial | cut -d "/" -f 2)
 	m3=$(echo $fechaValidar | cut -d "-" -f 2)
-	ai=$(echo $fechaInicial | cut -d "/" -f 3)
 	a3=$(echo $fechaValidar | cut -d "-" -f 3)
-	if [ "$fechaFinal" = "NULL" ];then
-		fechaFinal=$(date +"%Y%m%d")
-	else
-		df=$(echo $fechaFinal | cut -d "/" -f 1)
-		mf=$(echo $fechaFinal | cut -d "/" -f 2)
-		af=$(echo $fechaFinal | cut -d "/" -f 3)
-		fechaFinal="$af$mf$df"
-	fi
+	
+	di=$(echo $fechaInicial | cut -c1,2)
+	mi=$(echo $fechaInicial | cut -c3,4)
+	ai=$(echo $fechaInicial | cut -c5,6,7,8)
+
 	#Invierto el orden de las fechas para poder compararlas (año/mes/dia)
-	fechaInicial="$ai$mi$di"
-	fechaValidar="$a3$m3$d3"
+	fechaInicial=$(date --date="$ai-$mi-$di" +"%Y%m%d")
+	fechaValidar=$(date --date="$a3-$m3-$d3" +"%Y%m%d")
+	#echo "fechaInicial: $fechaInicial fechaFinal:$fechaFinal fechaValidar:$fechaValidar"
+
 	if [[ "$fechaInicial" > "$fechaValidar" ]]; then
 		#Antes de la fecha inicial
+		#echo "es menor"
 		return 1
 	fi
+
+	if [[ "$fechaFinal" = "NULL" ]]; then
+		return 0
+	fi
+
+	
+	df=$(echo $fechaFinal | cut -c1,2)
+	mf=$(echo $fechaFinal | cut -c3,4)
+	af=$(echo $fechaFinal | cut -c5,6,7,8)
+	fechaFinal="$af$mf$df"
+	
 	if [[ "$fechaFinal" < "$fechaValidar" ]]; then
 		#Despues de la fecha final
+		#echo "es major, $fechaFinal"		
 		return 1
 	fi	
 	return 0
