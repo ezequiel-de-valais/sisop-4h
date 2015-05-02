@@ -48,7 +48,7 @@ function chequearVariables {
 
 function setVariablesDeConfiguracion {
     
-    export $1=`grep "$1" "$CONFDIR/$confFile" | cut -d":" -f 2`
+    export $1=`grep "$1" "$CONFDIR/$confFile" | cut -d"=" -f 2`
 }
 
 # Chequea que existan los scripts en la carpeta BINDIR, 
@@ -59,19 +59,20 @@ function chequearComandos {
 
  for i in ${comandos[*]}
    do
-     if [ -f $BINDIR/$i ]; then
+     if [ -f $GRUPO$BINDIR/$i ]; then
           #echo -e "El comando $i existe"
  
-          if ! [ -x $BINDIR/$i ]; then 
+          if ! [ -x $GRUPO$BINDIR/$i ]; then 
             #echo -e "y tiene permisos de ejecucion"
           #else 
-            chmod 777 $BINDIR/$i
+            chmod 777 $GRUPO$BINDIR/$i
             #echo -e "`ls -l $BINDIR/$i`"
           fi
          
      else
         #echo -e "El comando $i no existe" 
-        grabarLog "El comando $i no existe." "ERR"
+        grabarLog "El comando $GRUPO$BINDIR/$i no existe." "ERR"
+        error=true
      fi
    done  
    #echo -e 
@@ -84,19 +85,20 @@ function chequearMaestros {
 
  for i in ${maestros[*]}
    do
-     if [ -f $MAEDIR/$i ]; then
+     if [ -f $GRUPO$MAEDIR/$i ]; then
           #echo -e "El archivo maestro $i existe"
  
-          if ! ([ -r $MAEDIR/$i ] && ! [ -w $MAEDIR/$i ]) ; then
+          if ! ([ -r $GRUPO$MAEDIR/$i ] && ! [ -w $GRUPO$MAEDIR/$i ]) ; then
             #echo -e "y tiene permisos de lectura, pero no escritura"
           #else 
-            chmod 444 $MAEDIR/$i
+            chmod 444 $GRUPO$MAEDIR/$i
             #echo -e `ls -l $MAEDIR/$i`
           fi
          
      else
         #echo -e "El archivo maestro $i no existe" 
-        grabarLog "El maestro $i no existe." "ERR"
+        grabarLog "El maestro $GRUPO$MAEDIR/$i no existe." "ERR"
+        error=true
      fi
    done  
    #echo -e 
@@ -109,19 +111,20 @@ function chequearTablas {
 
  for i in ${tablas[*]}
    do
-     if [ -f $MAEDIR/tab/$i ]; then
+     if [ -f $GRUPO$MAEDIR/tab/$i ]; then
           #echo -e "La tabla $i existe"
  
-          if ! ([ -r $MAEDIR/tab/$i ] && ! [ -w $MAEDIR/tab/$i ]); then 
+          if ! ([ -r $GRUPO$MAEDIR/tab/$i ] && ! [ -w $GRUPO$MAEDIR/tab/$i ]); then 
             #echo -e "y tiene permisos de lectura, pero no escritura"
           #else 
-            chmod 444 $MAEDIR/tab/$i
+            chmod 444 $GRUPO$MAEDIR/tab/$i
             #echo -e `ls -l $MAEDIR/tab/$i`
           fi
          
      else
         #echo -e "La tabla $i no existe" 
-        grabarLog "La tabla $i no existe." "ERR"
+        grabarLog "La tabla $GRUPO$MAEDIR/tab/$i no existe." "ERR"
+        error=true
      fi
    done  
    #echo -e 
@@ -132,13 +135,13 @@ function chequearTablas {
 
 function chequearPaths {
    
-   ejec=`echo $PATH | grep $BINDIR`
+   ejec=`echo $PATH | grep $GRUPO$BINDIR`
 
   if [ -z "$ejec" ]; then
 
     #echo -e "No esta el path de ejecutables, agregando..."
     
-    export PATH=$PATH:$BINDIR
+    export PATH=$PATH:$GRUPO$BINDIR
     
     #echo -e "Agregado\n"
 
@@ -187,16 +190,15 @@ function lanzarRecPro {
 
 function mostrarMensajeInstalacionFinalizada {
 
-	CONFDIR="$GRUPO""conf"
+	CONFDIR=$GRUPO/conf
 	dirconf=`ls $CONFDIR`
-	dirbin=`ls $BINDIR`
-	dirmae=`ls -R $MAEDIR`
-	dirlog=`ls $LOGDIR`
+	dirbin=`ls $GRUPO$BINDIR`
+	dirmae=`ls -R $GRUPO$MAEDIR`
+	dirlog=`ls $GRUPO$LOGDIR`
 
 	procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 
-	mensaje="
-TP SO7508 Primer Cuatrimestre 2015. Tema H Copyright (c) Grupo 04.
+	mensaje="TP SO7508 Primer Cuatrimestre 2015. Tema H Copyright (c) Grupo 04.
 
 Directorio de Configuración: $CONFDIR
 
@@ -204,39 +206,37 @@ Archivos:
 $dirconf
 
 
-Directorio de Ejecutables: $BINDIR
+Directorio de Ejecutables: $GRUPO$BINDIR
 
 Archivos: 
 $dirbin
 
 
-Directorio de Maestros y Tablas: $MAEDIR
+Directorio de Maestros y Tablas: $GRUPO$MAEDIR
 
 Archivos: 
 $dirmae
 
 
-Directorio de recepción de documentos para protocolización: $NOVEDIR
+Directorio de recepción de documentos para protocolización: $GRUPO$NOVEDIR
 
-Directorio de Archivos Aceptados: $ACEPDIR
+Directorio de Archivos Aceptados: $GRUPO$NOVEDIR$ACEPDIR
 
-Directorio de Archivos Rechazados: $RECHDIR
+Directorio de Archivos Rechazados: $GRUPO$NOVEDIR$RECHDIR
 
-Directorio de Archivos Protocolizados: $PROCDIR
+Directorio de Archivos Protocolizados: $GRUPO$NOVEDIR$PROCDIR
 
-Directorio para informes y estadísticas: $INFODIR
+Directorio para informes y estadísticas: $GRUPO$NOVEDIR$INFODIR
 
-Nombre para el repositorio de duplicados: $DUPCDIR
+Nombre para el repositorio de duplicados: $GRUPO$NOVEDIR$DUPCDIR
 
-Directorio para Archivos de Log: $LOGDIR
+Directorio para Archivos de Log: $GRUPO$LOGDIR
 
 Archivos: 
 $dirlog
 
 
-Estado del Sistema: INICIALIZADO
-
-Demonio corriendo bajo el no.: <$procssid> "
+Estado del Sistema: INICIALIZADO"
 
 	grabarLog "$mensaje" "INF"
 	echo "$mensaje"
@@ -266,31 +266,38 @@ function main {
       chequearMaestros
       chequearTablas
 
-      lanzarRecPro
-      if [ $? == 1 ]; then
-	msj="\n-Usted ha elegido no arrancar RecPro, \npara hacerlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Start.sh RecPro.sh\n"
-	echo -e $msj
-	grabarLog "$msj" "INF"
+      if [ false == $error ]; then
+
+         lanzarRecPro
+         if [ $? == 1 ]; then
+	   msj="\n-Usted ha elegido no arrancar RecPro, \npara hacerlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Start.sh RecPro.sh\n"
+	   echo -e $msj
+	   grabarLog "Se ha elegido no arrancar RecPro" "INF"
+         else
+	   chequearRecPro
+	   if [ $? == 0 ]; then
+	      Start.sh "RecPro.sh"
+	      msj="\n-Usted ha elegido arrancar RecPro, \npara frenarlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Stop.sh RecPro.sh\n"
+	      echo -e $msj
+	      procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
+	      echo -e "proc: $procssid"
+	      grabarLog "proc: $procssid" "INF"
+	   else
+	      msj="\n-RecPro ya iniciado, \npara frenarlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Stop.sh RecPro.sh\n"
+	      echo -e $msj
+	      grabarLog "RecPro ya iniciado" "ERR"
+	      procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
+	      echo -e "proc: $procssid"
+	      grabarLog "RecPro.sh proc: $procssid" "ERR"
+	   fi
+         fi
+	 mostrarMensajeInstalacionFinalizada
+	 export INICIALIZADO=true
       else
-	chequearRecPro
-	if [ $? == 0 ]; then
-	   Start.sh "RecPro.sh"
-	   msj="\n-Usted ha elegido arrancar RecPro, \npara frenarlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Stop.sh RecPro.sh\n"
-	   echo -e $msj
-	   procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
-	   echo -e "proc: $procssid"
-	   grabarLog "proc: $procssid" "INF"
-	else
-	   msj="\n-RecPro ya iniciado, \npara frenarlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Stop.sh RecPro.sh\n"
-	   echo -e $msj
-	   grabarLog "RecPro ya iniciado" "ERR"
-	   procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
-	   echo -e "proc: $procssid"
-	   grabarLog "RecPro.sh proc: $procssid" "ERR"
-	fi
+         msj="Error en la inicialización del ambiente. \nRevise el log para mayor información."
+	 echo -e $msj
+	 export INICIALIZADO=false
       fi
-      export INICIALIZADO="true"
-      mostrarMensajeInstalacionFinalizada
    fi
 
 }

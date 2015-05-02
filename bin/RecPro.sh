@@ -9,7 +9,7 @@
 
 # Tiempo que duerme
 intervalo=3
-NOVEDADES="$GRUPO$NOVEDIR/"
+NOVEDADES="$GRUPO$NOVEDIR"
 EMISORES="$GRUPO$MAEDIR/emisores.mae"
 NORMAS="$GRUPO$MAEDIR/normas.mae"
 GESTIONES="$GRUPO$MAEDIR/gestiones.mae"
@@ -22,18 +22,18 @@ function hay_archivos() {
 	cantidad_archivos=$(ls -1 $NOVEDADES | wc -l)
 }
 
-# Valida el formato de los nombres , moviendo los que no cumplen a rechazados
+# Valida el formato de los nombres, moviendo los que no cumplen a rechazados
 function validar_formato_nombre (){
 	archivos_a_rechazados=$(ls -1 $NOVEDADES | grep -v "^.*_.*_.*_.*_.*$") 
 	for archivo in $archivos_a_rechazados;do
 		./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
 		echo "Moviendo a rechazados por formato"
-		./Glog.sh "RecPro.sh" "Rechazado por formato invalido" INFO
+		./Glog.sh "RecPro" "Rechazado por formato invalido" INFO
 		#escribir log
 	done
 }
 
-# Valida que sean archivos de texto , los que hay en el directorio $NOVEDADES
+# Valida que sean archivos de texto, los que hay en el directorio $NOVEDADES
 # NO FUNCIONA 
 function validar_tipo_archivos (){
 	for archivo in $(ls -1 "$NOVEDADES");do
@@ -46,7 +46,7 @@ function validar_tipo_archivos (){
 
 
 function validar_fecha (){
-	#Obtengo fecha inicial y final , de la gestion
+	#Obtengo fecha inicial y final, de la gestion
 	fechaInicial=$(grep "^$gestion;.*;.*;.*;.*$" "$GESTIONES" | cut -d ";" -f 2 | sed s-"/"--g)
 	fechaFinal=$(grep "^$gestion;.*;.*;.*;.*$" "$GESTIONES" | cut -d ";" -f 3 | sed s-"/"--g)
 	fechaValidar=$fecha
@@ -96,7 +96,7 @@ ciclo=0
 while true
 do
 	let ciclo=ciclo+1
-	./Glog.sh "RecPro.sh" "ciclo numero : $ciclo" INFO
+	./Glog.sh "RecPro" "ciclo numero : $ciclo" INFO
 	#Escribir el numero de ciclo en el LOG
 	#Validar los archivos en el directorio de novedades
 	hay_archivos
@@ -113,25 +113,25 @@ do
 			fecha=$(echo $archivo | cut -d "_" -f 5)
 			if [ $(grep -c "^$gestion;.*;.*;.*;.*$" "$GESTIONES") -eq 0 ];then
 				./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
-				./Glog.sh "RecPro.sh" "$archivo rechazados gestion invalida" INFO
+				./Glog.sh "RecPro" "$archivo rechazados gestion invalida" INFO
 				#Loggear	
 			elif [ $(grep -c "^$norma;.*;.*$" "$NORMAS") -eq 0 ];then
 				./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
-				./Glog.sh "RecPro.sh" "$archivo rechazados cod_norma invalido" INFO
+				./Glog.sh "RecPro" "$archivo rechazados cod_norma invalido" INFO
 				#Loggear
 			elif [ $(grep -c "^$emisor;.*;.*;.*$" "$EMISORES") -eq 0 ];then
 				./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
-				./Glog.sh "RecPro.sh" "$archivo rechazados cod_emisor invalido" INFO
+				./Glog.sh "RecPro" "$archivo rechazados cod_emisor invalido" INFO
 				#Loguear
 			else 
 				validar_fecha
 				if [ $? = 1 ];then
 					./Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
-					./Glog.sh "RecPro.sh" "$archivo rechazado fecha invalida" INFO
+					./Glog.sh "RecPro" "$archivo rechazado fecha invalida" INFO
 				else
 					mkdir -p "$ACEPTADOS/$gestion"
 					./Mover.sh "$NOVEDADES/$archivo" "$ACEPTADOS/$gestion"
-					./Glog.sh "RecPro.sh" "$archivo aceptados" INFO
+					./Glog.sh "RecPro" "$archivo aceptados" INFO
 				fi
 			fi
 		done
