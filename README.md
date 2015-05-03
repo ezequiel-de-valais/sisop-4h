@@ -2,9 +2,9 @@
 
 #SISOP TP G4
 ###FLUJO PARA ARRANCAR
-correr desde GRUPO:
+correr desde GRUPO :
 ```sh
-./bin/InsPro.sh
+./InsPro.sh
 ```
 seguir los pasos de instalacion
 moverse al bin:
