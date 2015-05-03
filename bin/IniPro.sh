@@ -250,7 +250,7 @@ function main {
    error=false
    variables=(GRUPO BINDIR MAEDIR NOVEDIR ACEPDIR RECHDIR PROCDIR INFODIR DUPDIR LOGDIR LOGSIZE)
    maestros=(emisores.mae normas.mae gestiones.mae)
-   comandos=(Start.sh Stop.sh Mover.sh Glog.sh InsPro.sh IniPro.sh RecPro.sh ProPro.sh InfPro.pl)
+   comandos=(Start.sh Stop.sh Mover.sh Glog.sh IniPro.sh RecPro.sh ProPro.sh InfPro.pl)
    tablas=(nxe.tab axg.tab)
    CONFDIR=../conf
    confFile=InsPro.conf

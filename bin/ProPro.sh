@@ -41,7 +41,7 @@ function validarEjecucionIniPro {
 
 function verificarDuplicado {
 
-  if [ ! -f $2/$1 ]; then
+  if [ -f $2/$1 ]; then
     return 0
   else
     return 1
@@ -58,6 +58,38 @@ function verificarNormaEmisor {
   else
     return 1
   fi
+
+}
+
+# Valida que el registro sea válido
+# $1=archivo a procesar
+# $2=gestion
+
+function validadorRegistro {
+
+   while read line || [[ -n "$line" ]]; do 
+	validarFechaRegistro "$2"
+   done < $1
+
+}
+
+# Valida que el registro sea válido
+# $1=gestion
+
+function validadorFechaRegistro {
+   
+   
+
+}
+
+# Genera el archivo de registros rechazados
+# $1=gestion
+# $2=registro
+
+function rechazarRegistro {
+
+   RECHFILE="$GRUPO${PROCDIR}/$1.rech"
+   echo "$2" >> "$RECHFILE"
 
 }
 
@@ -78,10 +110,12 @@ function main {
       cantidadArchivos=`find $GRUPO$NOVEDIR$ACEPDIR -type f | wc -l`
       grabarLog "Cantidad de archivos a procesar: $cantidadArchivos" "INF"
       MAESTROGESTIONES="$GRUPO$MAEDIR/gestiones.mae"
+      gestiones=""
       while read line || [[ -n "$line" ]]; do 
           gestiones+=$(echo $line | cut -d ";" -f1) 
           gestiones+=" "
       done < $MAESTROGESTIONES
+      echo -e ${gestiones[*]}
       for gestion in ${gestiones[*]}; do
           if [ `ls $GRUPO$NOVEDIR$ACEPDIR | grep -c $gestion` != 0 ]; then
              if [ `ls $GRUPO$NOVEDIR$ACEPDIR/$gestion | cut -d"_" -f1 | grep -c $gestion` != 0 ]; then #Hay al menos un arch de la gestion
@@ -89,7 +123,7 @@ function main {
 		for fecha in $fechasordenadas; do
 		    for archivo in `ls $GRUPO$NOVEDIR$ACEPDIR/$gestion | grep $fecha`; do
           	    	grabarLog "Archivo a procesar: $archivo" "INF"
-          	    	verificarDuplicado $archivo "$GRUPO$NOVEDIR$PROCDIR""proc"
+          	    	verificarDuplicado $archivo "$GRUPO$NOVEDIR$PROCDIR/proc"
           	    	if [ $? == 0 ]; then   #Si esta duplicado
              		    grabarLog "Se rechaza el archivo por estar DUPLICADO." "WAR"
              		    Mover.sh "$GRUPO$NOVEDIR$ACEPDIR/$gestion/$archivo" "$GRUPO$NOVEDIR$RECHDIR" "ProPro"
@@ -101,8 +135,7 @@ function main {
              		       grabarLog "Se rechaza el archivo. Emisor no habilitado en este tipo de norma." "WAR"
              		       Mover.sh "$GRUPO$NOVEDIR$ACEPDIR/$gestion/$archivo" "$GRUPO$NOVEDIR$RECHDIR" "ProPro"
           	    	    else
-			       #TODO Falta la validación por registro
-	     		       echo -e "Falta la validación por registro." 
+			       validadorRegistro "$GRUPO$NOVEDIR$ACEPDIR/$gestion/$archivo" "$gestion"
           	    	    fi
           	    	fi
 		    done
