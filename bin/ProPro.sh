@@ -49,12 +49,15 @@ function verificarDuplicado {
 # Verifica que la combinacion COD_NORMA/COD_EMISOR sea valida
 
 function verificarNormaEmisor {
+  nxefile="$GRUPO$MAEDIR/tab/nxe.tab"
+  #echo "NXEFILE $nxefile"
+  res=$(grep -c "$1;$2" "$nxefile")
+  #echo $res
   if [ $res -eq 0 ]; then
     return 0
   else
     return 1
   fi
-
 }
 
 # Funcion principal
@@ -62,10 +65,8 @@ function verificarNormaEmisor {
 function main {
    
    validarEjecucionIniPro
-   exit
-   validacion="$?"
-
-   if [ $validacion -eq 1 ]; then 
+   validacion=$?
+   if [ $validacion -eq 0 ]; then 
       grabarLog "El ambiente no está inicializado." "ERR"
       grabarLog "No se ejecutará el programa ProPro." "ERR"
    else
