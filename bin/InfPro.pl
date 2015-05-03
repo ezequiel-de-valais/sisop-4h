@@ -5,9 +5,9 @@ sub inicio{
 	my $opcion = menuPrincipal();
 	my @rutas;
 	crearHashes();
-	#for $family ( keys %hash_cod_norma ) {
-	#	 #chomp($family);
-   	#	 print "$family: @{ $hash_cod_norma{$family} }";
+	#for $family ( keys %hash_cod_emisor ) {
+		 #chomp($family);
+   	#	 print "$family: @{ $hash_cod_emisor{$family} }";
 	#}	
 	procesarConsulta($opcion);
 }
@@ -36,38 +36,270 @@ sub procesarConsulta{
 	if ($entrada eq "a"){
 		mostrarAyuda();
 	}
-	if ($entrada eq "c"){
+
+	#Faltaria ordenar los resultados por orden cronologico si no agrega palabra clave
+	if ( ($entrada eq "c")  || ($entrada eq "cg") ){
 		my @rutas_cod_norma;
 		my @rutas_anios;
+		my @rutas_nro_norma;
+		my @rutas_cod_gestion;
+		my @rutas_cod_emisor;
+		my @interseccion_rutas;
 
 		$palabra_clave = ingresarPalabraClave();
 		pedirFiltros($filtro_cod_norma, $filtro_anios, $filtro_nro_norma, $filtro_cod_gestion, $filtro_cod_emisor); 
-		#print "$filtro_cod_norma\n";
-		#print "$filtro_anios\n";
+
 		@rutas_cod_norma = candidatosPorCodigoNorma($filtro_cod_norma);
 		@rutas_anios = candidatosPorAnios($filtro_anios);
+		@rutas_nro_norma = candidatosPorNumeroNorma($filtro_nro_norma);
+		@rutas_cod_gestion = candidatosPorCodigoGestion($filtro_cod_gestion);
+		@rutas_cod_emisor = candidatosPorCodigoEmisor($filtro_cod_emisor);
 		
-		
-		print "Rutas de los codigos de norma: \n";
-		foreach $ruta (@rutas_cod_norma){
-			print "$ruta";
+		#Busco interseccion entre los arrays de rutas
+		@interseccion_rutas = do {
+		    my %seen;
+		    for my $x (\@rutas_cod_norma, \@rutas_anios, \@rutas_nro_norma, \@rutas_cod_gestion, \@rutas_cod_emisor) {
+			for my $y (@$x) {
+			    $seen{$y}{$x} = undef;
+			}
+		    }
+		    grep {5 == keys %{$seen{$_}}} keys %seen;
+		};
+
+		# Calculo de los pesos de las rutas
+		calcularPesos($palabra_clave, $filtro_nro_norma, $filtro_cod_emisor, @interseccion_rutas, %hash_puntajes);
+
+		if ($entrada eq "c"){
+			mostrarConsulta();
 		}
-		print "Rutas de los anios: \n";
-		foreach $ruta (@rutas_anios){
-			print "$ruta";
+		else{
+			grabarConsulta();
 		}
 	}
+}
+
+sub grabarConsulta(){
+	
+	@rutas = ();
+	my $dir = "/home/ezequiel/SisOpTp/INFODIR";
+	#my $dir = "../INFORDIR";
+	find(\&tomarArchivos, $dir);
+
+	@rutas = reverse sort(@rutas);
+
+	$ruta_mayor = $rutas[0];
+
+	$numero_mayor = substr($ruta_mayor, length($ruta_mayor)-4);	
+	
+	$numero_siguiente = $numero_mayor + 1;
+
+	$result = sprintf('%03d',$numero_siguiente);
+	
+	$ruta_siguiente = $dir."/"."resultados_".$result;
+	
+	open(FILE, "> $ruta_siguiente") || die "Error al abrir el archivo";
+	
+	#Grabo la consulta
+	@puntajes = keys %hash_puntajes;	
+	@puntajes_ordenados = reverse sort{$a <=> $b} @puntajes; 
+	
+	if ((scalar @puntajes_ordenados) > 0){
+		for $puntaje( @puntajes_ordenados ) {
+			for $reg (@{ $hash_puntajes{$puntaje}}){
+				@campos = split (';', $reg);
+				#Entrar a la tabla con codigo emisor y extraer el Emisor
+				print FILE "$campos[12]  $campos[13] $campos[2] $campos[3] $campos[11] $campos[1] $campos[4] $campos[5] $campos[10]";
+			}	
+		}
+	}
+	close(FILE);
+	
+	print("Su busqueda se ha almacenado en la siguiente ruta:\n");
+	print("$ruta_siguiente\n");
+}
+
+sub mostrarConsulta(){
+
+	@puntajes = keys %hash_puntajes;	
+	@puntajes_ordenados = reverse sort{$a <=> $b} @puntajes; 
+	
+	#Muestro el resultado de la consulta
+	if ((scalar @puntajes_ordenados) > 0){
+		print "\nLista de archivos ordenados por peso: \n\n";
+		for $puntaje( @puntajes_ordenados ) {
+			#print "$puntaje: @{ $hash_puntajes{$puntaje}}\n";
+			for $reg (@{ $hash_puntajes{$puntaje}}){
+				@campos = split (';', $reg);
+				print "$campos[12] $campos[13] $campos[2]/$campos[3] $campos[11] $campos[1] $puntaje\n";
+				print "$campos[4]\n";
+				print "$campos[5]\n\n";
+			}	
+		}
+	}
+	else{
+		print "\nNo se encontro ningun archivo\n";
+	}
+
+}
+
+sub calcularPesos{
+	($palabra_clave, $filtro_nro_norma, $filtro_cod_emisor, @interseccion_rutas, %hash_puntajes) = @_;
+		
+	#my %hash_puntajes;
+	chomp($palabra_clave);  
+
+	for $ruta (@interseccion_rutas){
+		chomp($ruta);
+		open(FILE, $ruta) || die "No se pudo abrir el archivo";
+
+		while ($reg = <FILE>){
+			$puntaje = 0; 
+			chomp($reg);
+			@campos = split (';', $reg);
+			## CHEQUEAR QUE LOS REGISTRON COINCIDEN CON LOS FILTROS	
+			
+			if ($filtro_nro_norma ne ""){
+				($nro_norma_inicial, $nro_norma_final) = split(/[ -]/, $filtro_nro_norma);
+				chomp($nro_norma_inicial);
+				chomp($nro_norma_final);
+				$nro_norma_inicial =~ s/^0+//g;
+				$nro_norma_final =~ s/^0+//g;
+				if (($nro_norma_inicial > $campos[2]) || ($campos[2] > $nro_norma_final)){
+					next;
+				} 
+			}
+
+			if (($filtro_cod_emisor ne "")) {
+				if ($filtro_cod_emisor != $campos[13]){
+					next;
+				}
+			}
+			$causante = $campos[4];
+			$extracto = $campos[5];
+			chomp($causante);
+			chomp($extracto);
+			
+			$puntaje += cantidadDeOcurrencias($causante, $palabra_clave)*10;
+			$puntaje += cantidadDeOcurrencias($extracto, $palabra_clave)*1;
+	
+			if ( exists($hash_puntajes{$puntaje}) ){
+				push ($hash_puntajes{$puntaje}, $reg);
+			}
+			else{
+				$hash_puntajes{$puntaje}[0] = $reg;
+			}
+		}
+	}
+}
+
+sub cantidadDeOcurrencias{
+	my $text = $_[0];
+	my $palabra_clave = $_[1];
+
+	my @strings = split / /, $text;
+	my $count = 0; 	
+
+	foreach my $str (@strings) {
+		if ($str eq $palabra_clave){	
+			$count++;
+		}
+	}
+
+	return $count;
+}
+
+sub candidatosPorCodigoEmisor(){
+	my $filtro_cod_emisor = $_[0];
+	my $ruta;
+	my $rutas_cod_emisor;
+	my @rutas_aux_cod_emisor;
+
+	if ($filtro_cod_emisor ne ""){
+		
+		if ( exists($hash_cod_emisor{$filtro_cod_emisor}) ){
+			for $ruta ( @{ $hash_cod_emisor{$filtro_cod_emisor} }){
+				push(@rutas_cod_emisor, $ruta);
+			}
+		}
+	}
+	else{
+		for $rutas_aux_cod_emisor ( keys %hash_cod_emisor ) {	
+   			for $ruta ( @{ $hash_cod_emisor{$rutas_aux_cod_emisor} }){
+				push(@rutas_cod_emisor, $ruta);
+			}
+		}
+	}
+	return @rutas_cod_emisor;
+}
+
+sub candidatosPorCodigoGestion{
+	my $filtro_cod_gestion = $_[0];
+	@rutas_cod_gestion;
+	my $dir;
+	
+	if ($filtro_cod_gestion ne ""){
+		$dir = "/home/ezequiel/SisOpTp/PROCDIR"."/".$filtro_cod_gestion;
+		#$dir = "../PROCDIR"."/".$filtro_cod_gestion;
+		find(\&tomarArchivosCodGestion, $dir);
+	} 
+	else{
+		$dir = "/home/ezequiel/SisOpTp/PROCDIR";
+		#$dir = "../PROCDIR";
+		find(\&tomarArchivosCodGestion, $dir);	
+	}
+	
+	return @rutas_cod_gestion;
+}
+
+sub tomarArchivosCodGestion{
+	my $elem = $_;	
+	if (-f $elem){
+		push (@rutas_cod_gestion, "$File::Find::name\n");	
+	}
+}
+
+sub candidatosPorNumeroNorma{
+	my $filtro_nro_norma = $_[0];
+	my $ruta;
+	my $rutas_nro_norma;
+	my @rutas_aux_nro_norma;
+
+	if ($filtro_nro_norma ne ""){
+		($nro_norma_inicial, $nro_norma_final) = split(/[ -]/, $filtro_nro_norma);
+		chomp($nro_norma_inicial);
+		chomp($nro_norma_final);
+		$nro_norma_inicial =~ s/^0+//g;
+		$nro_norma_final =~ s/^0+//g;
+
+		$nro_norma = $nro_norma_inicial;
+		while ($nro_norma <= $nro_norma_final){
+			if ( exists($hash_nro_norma{$nro_norma}) ){
+   				for $ruta ( @{ $hash_nro_norma{$nro_norma} }){
+					push(@rutas_nro_norma, $ruta);
+				}
+			}
+		$nro_norma++;
+		}
+	}
+	else{
+		for $rutas_aux_nro_norma ( keys %hash_nro_norma ) {	
+   			for $ruta ( @{ $hash_nro_norma{$rutas_aux_nro_norma} }){
+				push(@rutas_nro_norma, $ruta);
+			}
+		}
+	}
+	return @rutas_nro_norma;
 }
 
 
 sub candidatosPorAnios{
 	my $filtro_anios = $_[0];
 	my $ruta;
-	my $rutas_anios;
+	my @rutas_anios;
 	my @rutas_aux_anios;
 
 	if ($filtro_anios ne ""){
-		($anio_inicial, $anio_final) = split(' ', $filtro_anios);	
+		($anio_inicial, $anio_final) = split(/[ -]/, $filtro_anios);	
 		chomp($anio_inicial);
 		chomp($anio_final);
 
@@ -82,7 +314,7 @@ sub candidatosPorAnios{
 			$anio++;
 		}
 	}
-	else{	print "tengo de tomar todos los años\n";
+	else{
 		for $rutas_aux_anios ( keys %hash_anio ) {	
    			for $ruta ( @{ $hash_anio{$rutas_aux_anios} }){
 				push(@rutas_anios, $ruta);
@@ -129,7 +361,7 @@ sub pedirFiltros{
 
 
 	if ( ($filtro_cod_norma eq "") && ($filtro_anios eq "") && ($filtro_nro_norma eq "") 
-	             && ($filtrocod_gestion eq "") && ($filtro_cod_emisor eq "") ){
+	             && ($filtro_cod_gestion eq "") && ($filtro_cod_emisor eq "") ){
 		print "Debe ingresar al menos un filtro !!!\n";
 		pedirFiltros($filtro_cod_norma, $filtro_anios, $filtro_nro_norma, $filtro_cod_gestion, $filtro_cod_emisor);
 	}
@@ -179,12 +411,12 @@ sub ingresarFiltroPorAnio{
 	$rango_anios = <STDIN>;
 	chomp($rango_anios);
 	
-	$rango_anios = validarRango($rango_anios);		
+	$rango_anios = validarRangoAnios($rango_anios);		
 
 	return $rango_anios;				
 }
 
-sub validarRango{
+sub validarRangoAnios{
 	$rango_anios = $_[0];
 	$esValido = 0;
 	
@@ -202,14 +434,13 @@ sub validarRango{
 
 sub ingresarFiltroPorNroNorma{
 	
-	print "Ingrese un rango Numero de Norma (52): ";
+	print "Ingrese un rango Numero de Norma (0001-7345): ";
 	$rango_nro_norma = <STDIN>;
 	chomp($rango_nro_norma);
 	$esValido = 0;
 
 	while ( $esValido == 0 ){
-
-		if ( ($rango_nro_norma !~ /\D+/) || (length($rango_nro_norma) == 0) ){		
+		if ( ( ($rango_nro_norma =~ /[0-9]{4}.[0-9]{4}/) && ( length($rango_nro_norma) == 9 ) ) || (length($rango_nro_norma) == 0) ){				
 			return $rango_nro_norma;		
 		}
 		else{
@@ -256,7 +487,6 @@ sub ingresarFiltroPorCodEmisor{
 	# Validaciones
 	while ( $esValido == 0 ){	
 		if( ( ( $cod_emisor !~ /\D+/ ) && ( $cod_emisor eq $cod_emisor_aux ) ) || (length($cod_emisor) == 0) ){
-			print "$cod_emisor\n";
 			return $cod_emisor;
 		}
 		else{
@@ -270,8 +500,8 @@ sub ingresarFiltroPorCodEmisor{
 }
 
 sub crearHashes{
-	#my $dir = "/home/hernan/PROCDIR";
-	my $dir = "../PROCDIR";
+	my $dir = "/home/ezequiel/SisOpTp/PROCDIR";
+	#my $dir = "../PROCDIR";
 	find(\&tomarArchivos, $dir);
 	$separador = ';';
 	my @regs;
@@ -286,22 +516,23 @@ sub crearHashes{
 			@regs = split($separador, $reg);		
 			$i = 1;
 			foreach $campo (@regs){	
-				if ( $i == 3){		
-					crearHashNroNorma($campo);	
+				if ( $i == 3){	
+					crearHashNroNorma($campo, $ruta);	
 				}
 				if ( $i == 14){
-					crearHashCodEmisor($campo);	
+					crearHashCodEmisor($campo, $ruta);	
 				}
 				$i++;
 			}	
 			$reg = <FILE>;
 		}
-	}	
+	}
 }
 
 sub crearHashNroNorma{
 	my $nro_norma = $_[0];
 	my $ruta = $_[1];
+	
 	if (exists($hash_nro_norma{$nro_norma})){
 		push($hash_nro_norma{$nro_norma}, $ruta);
 	}
@@ -313,6 +544,8 @@ sub crearHashNroNorma{
 sub crearHashCodEmisor{
 	my $cod_emisor = $_[0];
 	my $ruta = $_[1];
+	chomp($cod_emisor);	
+
 	if (exists($hash_cod_emisor{$cod_emisor})){
 		push($hash_cod_emisor{$cod_emisor}, $ruta);
 	}
@@ -356,7 +589,7 @@ sub tomarArchivos{
 }
 sub separador{
 	for (my $i = 0; $i < (split(/ /,`/bin/stty size`))[1]/4; $i+=1){ print "----"; };
-	for (my $i = 0; $i < (split(/ /,`/bin/stty size`))[1]%4; $i+=1){ print "-"; };
+	##for (my $i = 0; $i < (split(/ /,`/bin/stty size`))[1]%4; $i+=1){ print "-"; }; ##comento porque daba error
 	print "\n";
 }
 
@@ -436,5 +669,6 @@ my %hash_cod_norma;
 my %hash_anio;
 my %hash_nro_norma;
 my %hash_cod_emisor;
+my %hash_puntajes;
 
 inicio();
