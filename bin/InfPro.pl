@@ -36,7 +36,9 @@ sub procesarConsulta{
 	if ($entrada eq "a"){
 		mostrarAyuda();
 	}
-	if ($entrada eq "c"){
+
+	#Faltaria ordenar los resultados por orden cronologico si no agrega palabra clave
+	if ( ($entrada eq "c")  || ($entrada eq "cg") ){
 		my @rutas_cod_norma;
 		my @rutas_anios;
 		my @rutas_nro_norma;
@@ -65,15 +67,85 @@ sub procesarConsulta{
 		};
 
 		# Calculo de los pesos de las rutas
-		
-		mostrarConsulta($palabra_clave, $filtro_nro_norma, $filtro_cod_emisor, @interseccion_rutas);
+		calcularPesos($palabra_clave, $filtro_nro_norma, $filtro_cod_emisor, @interseccion_rutas, %hash_puntajes);
+
+		if ($entrada eq "c"){
+			mostrarConsulta();
+		}
+		else{
+			grabarConsulta();
+		}
 	}
 }
 
-sub mostrarConsulta{
-	($palabra_clave, $filtro_nro_norma, $filtro_cod_emisor, @interseccion_rutas) = @_;
+sub grabarConsulta(){
+	
+	@rutas = ();
+	my $dir = "/home/ezequiel/SisOpTp/INFODIR";
+	#my $dir = "../INFORDIR";
+	find(\&tomarArchivos, $dir);
+
+	@rutas = reverse sort(@rutas);
+
+	$ruta_mayor = $rutas[0];
+
+	$numero_mayor = substr($ruta_mayor, length($ruta_mayor)-4);	
+	
+	$numero_siguiente = $numero_mayor + 1;
+
+	$result = sprintf('%03d',$numero_siguiente);
+	
+	$ruta_siguiente = $dir."/"."resultados_".$result;
+	
+	open(FILE, "> $ruta_siguiente") || die "Error al abrir el archivo";
+	
+	#Grabo la consulta
+	@puntajes = keys %hash_puntajes;	
+	@puntajes_ordenados = reverse sort{$a <=> $b} @puntajes; 
+	
+	if ((scalar @puntajes_ordenados) > 0){
+		for $puntaje( @puntajes_ordenados ) {
+			for $reg (@{ $hash_puntajes{$puntaje}}){
+				@campos = split (';', $reg);
+				#Entrar a la tabla con codigo emisor y extraer el Emisor
+				print FILE "$campos[12]  $campos[13] $campos[2] $campos[3] $campos[11] $campos[1] $campos[4] $campos[5] $campos[10]";
+			}	
+		}
+	}
+	close(FILE);
+	
+	print("Su busqueda se ha almacenado en la siguiente ruta:\n");
+	print("$ruta_siguiente\n");
+}
+
+sub mostrarConsulta(){
+
+	@puntajes = keys %hash_puntajes;	
+	@puntajes_ordenados = reverse sort{$a <=> $b} @puntajes; 
+	
+	#Muestro el resultado de la consulta
+	if ((scalar @puntajes_ordenados) > 0){
+		print "\nLista de archivos ordenados por peso: \n\n";
+		for $puntaje( @puntajes_ordenados ) {
+			#print "$puntaje: @{ $hash_puntajes{$puntaje}}\n";
+			for $reg (@{ $hash_puntajes{$puntaje}}){
+				@campos = split (';', $reg);
+				print "$campos[12] $campos[13] $campos[2]/$campos[3] $campos[11] $campos[1] $puntaje\n";
+				print "$campos[4]\n";
+				print "$campos[5]\n\n";
+			}	
+		}
+	}
+	else{
+		print "\nNo se encontro ningun archivo\n";
+	}
+
+}
+
+sub calcularPesos{
+	($palabra_clave, $filtro_nro_norma, $filtro_cod_emisor, @interseccion_rutas, %hash_puntajes) = @_;
 		
-	my %hash_puntajes;
+	#my %hash_puntajes;
 	chomp($palabra_clave);  
 
 	for $ruta (@interseccion_rutas){
@@ -117,25 +189,6 @@ sub mostrarConsulta{
 				$hash_puntajes{$puntaje}[0] = $reg;
 			}
 		}
-	}
-	@puntajes = keys %hash_puntajes;	
-	@puntajes_ordenados = reverse sort{$a <=> $b} @puntajes; 
-	
-	#Muestro el resultado de la consulta
-	if ((scalar @puntajes_ordenados) > 0){
-		print "\nLista de archivos ordenados por peso: \n\n";
-		for $puntaje( @puntajes_ordenados ) {
-			#print "$puntaje: @{ $hash_puntajes{$puntaje}}\n";
-			for $reg (@{ $hash_puntajes{$puntaje}}){
-				@campos = split (';', $reg);
-				print "$campos[12] $campos[13] $campos[2]/$campos[3] $campos[11] $campos[1] $puntaje\n";
-				print "$campos[4]\n";
-				print "$campos[5]\n\n";
-			}	
-		}
-	}
-	else{
-		print "\nNo se encontro ningun archivo\n";
 	}
 }
 
@@ -185,13 +238,13 @@ sub candidatosPorCodigoGestion{
 	my $dir;
 	
 	if ($filtro_cod_gestion ne ""){
-		#$dir = "/home/ezequiel/SisOpTp/PROCDIR"."/".$filtro_cod_gestion;
-		$dir = "../PROCDIR"."/".$filtro_cod_gestion;
+		$dir = "/home/ezequiel/SisOpTp/PROCDIR"."/".$filtro_cod_gestion;
+		#$dir = "../PROCDIR"."/".$filtro_cod_gestion;
 		find(\&tomarArchivosCodGestion, $dir);
 	} 
 	else{
-		#$dir = "/home/ezequiel/SisOpTp/PROCDIR";
-		$dir = "../PROCDIR";
+		$dir = "/home/ezequiel/SisOpTp/PROCDIR";
+		#$dir = "../PROCDIR";
 		find(\&tomarArchivosCodGestion, $dir);	
 	}
 	
@@ -447,8 +500,8 @@ sub ingresarFiltroPorCodEmisor{
 }
 
 sub crearHashes{
-	#my $dir = "/home/ezequiel/SisOpTp/PROCDIR";
-	my $dir = "../PROCDIR";
+	my $dir = "/home/ezequiel/SisOpTp/PROCDIR";
+	#my $dir = "../PROCDIR";
 	find(\&tomarArchivos, $dir);
 	$separador = ';';
 	my @regs;
@@ -616,5 +669,6 @@ my %hash_cod_norma;
 my %hash_anio;
 my %hash_nro_norma;
 my %hash_cod_emisor;
+my %hash_puntajes;
 
 inicio();
