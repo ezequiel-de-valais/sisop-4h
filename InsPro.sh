@@ -17,11 +17,10 @@ LOGDIR=""
 LOGSIZE=""
 
 
-mkdir "$CONFDIR"
-
 #Variables para el script
 RUTA_CONFIG="$CONFDIR/InsPro.conf"
-
+USER_NAME=`whoami`
+COMANDOS="Glog.sh InfPro.pl IniPro.sh Mover.sh ProPro.sh RecPro.sh Start.sh Stop.sh"
 
 #loguear mensajes de instalador
 
@@ -30,9 +29,9 @@ log() {
 	tipo=$2
 	script="InsPro"	
 
-	if [ ! $tipo == ""]
+	if [ "$tipo" = "" ]
 	then
-		$tipo="INFO"
+		tipo="INFO"
 	fi
 	
 	bin/Glog.sh "$script" "$mensaje" "$tipo"
@@ -52,6 +51,41 @@ existeArchivo() {
 	fi
 
 	return 0
+}
+
+verificarArchivosNecesarios() {
+
+bindir=bin
+maedir=mae
+falla=0
+
+	# Verifico si esta el directorio bin
+	if [ ! -d "$bindir" ]; then
+		mostrarYLoguear "No existe el directorio '$bindir' con los archivos necesarios para instalar el programa." "ERR"
+		falla=1	
+	fi
+	# Verifico si esta el directorio mae
+	if [ ! -d "$maedir" ]; then
+		mostrarYLoguear "No existe el directorio '$maedir' con los archivos necesarios para instalar el programa." "ERR"
+		falla=1
+	fi
+
+	if [ $falla -eq 1 ]; then
+		return 1	
+	fi
+
+	for comando in $COMANDOS
+	do
+	    	existeArchivo "$bindir/$comando"
+		if [ $? -eq 1 ]; then
+			mostrarYLoguear "Falta el archivo $comando en el directorio $bindir. No se puede instalar el programa." "ERR"
+			falla=1
+	    	fi
+	done
+	if [ $falla -eq 1 ]; then
+		return 1	
+	fi
+return 0
 }
 
 #Chequeo que la computadora tenga Perl instalado
@@ -119,7 +153,12 @@ nombreDirValido() {
 	then
 		return 0
 	fi
-
+	
+	if [ "$1" == "conf" ] || [ "$1" == "pruebas" ]
+	then
+		"Los directorios 'conf' y 'pruebas' ya están siendo utilizados por el sistema, eliga otro directorio. "
+		return 1
+	fi
 	dif=`echo $1 | sed 's,[^0-9a-zA-Z/ ],,g'`
 	if [ "$1" = "$dif" ]
 	then
@@ -164,24 +203,27 @@ escribirValorEnConfig(){
 	if [ -f $RUTA_CONFIG ]
 	then
 		#leer el valor
-		leer=`grep "$clave" $RUTA_CONFIG | cut -d ':' -f 2`
+		leer=`grep "$clave" $RUTA_CONFIG | cut -d '=' -f 2`
 	else
 		leer=""
 	fi
-	
+	fecha="`date`"
 	if [ "$leer" = "" ]
 	then
 		#Si variable no existe agregar
-		echo "$clave:$valor" >> $RUTA_CONFIG
+		echo "$clave=$valor=$USER_NAME=$fecha" >> $RUTA_CONFIG
 	else
 		#Si existe actualizo su valor
-		TEMP=`sed "s,^$clave:.*$,$clave:$valor," $RUTA_CONFIG`
+		TEMP=`sed "s,$clave=.*$,$clave=$valor=$USER_NAME=$fecha,g" $RUTA_CONFIG`
 		#Reescribo config
+		IFS='
+'
 		rm $RUTA_CONFIG
 		for i in $TEMP
 		do
 			echo $i >> $RUTA_CONFIG
 		done
+		unset IFS
 	fi
 	return 0
 }
@@ -191,28 +233,31 @@ procesarDirectorio(){
 	directorio=$1
 	dir_default=$2
 	mensaje=$3
-	
-	while true
-	do
-		mostrarYLoguear "$mensaje" 
-		read valor
-		nombreDirValido $valor
-		if [ $? -eq 1 ]
-		then
-			mostrarYLoguear "El nombre ingresado es invalido. Solo puede contener letras y/o números." "WAR"
-		continue
-		elif [ "$valor" = "" ]
-		then
-			valor=$dir_default
-			log "Se usará el valor por defecto" 
-		else
-			actualizarValor "$directorio" "$valor"
-			log "El usario ingreso: $valor"
-		fi
-		valor=$(echo "$valor" | sed 's, ,\ ,g')
-		escribirValorEnConfig "$directorio" "$valor"
-		break
-	done
+	valor=`grep "$directorio" $RUTA_CONFIG | cut -f2 -d'='`
+	if [ "$valor" = "" ] || [ "$forzar" = 1 ]
+	then
+		while true
+		do
+			mostrarYLoguear "$mensaje" 
+			read valor
+			nombreDirValido $valor
+			if [ $? -eq 1 ]
+			then
+				mostrarYLoguear "El nombre ingresado es invalido. Solo puede contener letras y/o números y no puede ser 'conf' o 'pruebas' ya que estos son utlizados por el sitema." "WAR"
+			continue
+			elif [ "$valor" = "" ]
+			then
+				valor=$dir_default
+				log "Se usará el valor por defecto" 
+			else
+				actualizarValor "$directorio" "$valor"
+				log "El usario ingreso: $valor"
+			fi
+			valor=$(echo "$valor" | sed 's, ,\ ,g')
+			escribirValorEnConfig "$directorio" "$valor"
+			break
+		done
+	fi
 }
 
 #return 0 = es numero
@@ -235,40 +280,43 @@ esNumero() {
 
 #######################
 procesarDataSize() {
+	valor=`grep "DATASIZE" $RUTA_CONFIG | cut -f2 -d'='`
+	if [ "$valor" = "" ] || [ "$forzar" = 1 ]
+	then
+		while true
+		do
+			ESPACIO_EN_DISCO=`df -Phm / | tail -1 | tr -s ' ' | cut -d ' ' -f4`
+			mostrarYLoguear "Defina espacio mínimo libre para el arribo de novedades en MBytes ($DATASIZE_DEFAULT MB):"
 
-	while true
-	do
-		ESPACIO_EN_DISCO=`df -Phm / | tail -1 | tr -s ' ' | cut -d ' ' -f4`
-		mostrarYLoguear "Defina espacio mínimo libre para el arribo de novedades en MBytes ($DATASIZE_DEFAULT MB):"
-
-		read DATASIZE_TEMP
-		esNumero $DATASIZE_TEMP
-		if [ $? -eq 1 ]
-		then
-			mostrarYLoguear "Por favor ingrese un valor numerico." "WAR"
-			continue
-		elif [ "$DATASIZE_TEMP" != "" ]
-		then
-			
-			log "El usario ingreso: $DATASIZE_TEMP"
-			if [ $ESPACIO_EN_DISCO -lt $DATASIZE_TEMP ]
+			read DATASIZE_TEMP
+			esNumero $DATASIZE_TEMP
+			if [ $? -eq 1 ]
 			then
-				mostrarYLoguear "Insuficiente espacio en disco:
-Espacio disponible: $ESPACIO_EN_DISCO MB.
-Espacio requerido: $DATASIZE_TEMP MB.
-Cancele la instalación o inténtelo nuevamente."
+				mostrarYLoguear "Por favor ingrese un valor numerico." "WAR"
 				continue
+			elif [ "$DATASIZE_TEMP" != "" ]
+			then
+			
+				log "El usario ingreso: $DATASIZE_TEMP"
+				if [ $ESPACIO_EN_DISCO -lt $DATASIZE_TEMP ]
+				then
+					mostrarYLoguear "Insuficiente espacio en disco:
+	Espacio disponible: $ESPACIO_EN_DISCO MB.
+	Espacio requerido: $DATASIZE_TEMP MB.
+	Cancele la instalación o inténtelo nuevamente."
+					continue
+				else
+					DATASIZE=$DATASIZE_TEMP
+					actualizarValor "DATASIZE" $DATASIZE
+				fi
+				break
 			else
-				DATASIZE=$DATASIZE_TEMP
-				actualizarValor "DATASIZE" $DATASIZE
+				DATASIZE=$DATASIZE_DEFAULT
+				log "Se usará el valor por defecto" 
+				break
 			fi
-			break
-		else
-			DATASIZE=$DATASIZE_DEFAULT
-			log "Se usará el valor por defecto" 
-			break
-		fi
-	done
+		done
+	fi
 
 	escribirValorEnConfig "DATASIZE" "$DATASIZE"
 }
@@ -276,27 +324,32 @@ Cancele la instalación o inténtelo nuevamente."
 ###########################
 procesarTamanoLog() {
 	CLAVE="LOGSIZE"	
-	while true
-	do
-		mostrarYLoguear "Defina el tamaño máximo para cada archivo de log en KBytes ($LOGSIZE_DEFAULT):"
-		read LOGSIZE_TEMP
-		esNumero "$LOGSIZE_TEMP"
-		if [ $? -eq 1 ]
-		then
-			mostrarYLoguear "Por favor ingrese un valor numerico" "WAR"
-			continue
-		elif [ "$LOGSIZE_TEMP" != "" ]
-		then
-			VALOR=$LOGSIZE_TEMP
-			log "El usario ingreso: $VALOR"
-			actualizarValor $CLAVE $VALOR
-			break
-		else
-			VALOR=$LOGSIZE_DEFAULT
-			log "Se usará el valor por defecto: $VALOR"
-			break
-		fi
-	done
+	
+	valor=`grep "$CLAVE" $RUTA_CONFIG | cut -f2 -d'='`
+	if [ "$valor" = "" ] || [ "$forzar" = 1 ]
+	then
+		while true
+		do
+			mostrarYLoguear "Defina el tamaño máximo para cada archivo de log en KBytes ($LOGSIZE_DEFAULT):"
+			read LOGSIZE_TEMP
+			esNumero "$LOGSIZE_TEMP"
+			if [ $? -eq 1 ]
+			then
+				mostrarYLoguear "Por favor ingrese un valor numerico" "WAR"
+				continue
+			elif [ "$LOGSIZE_TEMP" != "" ]
+			then
+				VALOR=$LOGSIZE_TEMP
+				log "El usario ingreso: $VALOR"
+				actualizarValor $CLAVE $VALOR
+				break
+			else
+				VALOR=$LOGSIZE_DEFAULT
+				log "Se usará el valor por defecto: $VALOR"
+				break
+			fi
+		done
+	fi
 	escribirValorEnConfig $CLAVE $VALOR
 }
 
@@ -321,20 +374,20 @@ procesarTodo(){
 leerValoresConfig() {
 	if [ -f $RUTA_CONFIG ]
 	then
-		GRUPO=`grep 'GRUPO' $RUTA_CONFIG | cut -f2 -d':'`
-		CONFDIR=`grep 'CONFDIR' $RUTA_CONFIG | cut -f2 -d':'`
-		BINDIR=`grep 'BINDIR' $RUTA_CONFIG | cut -f2 -d':'`
-		MAEDIR=`grep 'MAEDIR' $RUTA_CONFIG | cut -f2 -d':'`
-		NOVEDIR=`grep 'NOVEDIR' $RUTA_CONFIG | cut -f2 -d':'`
-		ACEPDIR=`grep 'ACEPDIR' $RUTA_CONFIG | cut -f2 -d':'`
-		RECHDIR=`grep 'RECHDIR' $RUTA_CONFIG | cut -f2 -d':'`		
-		PROCDIR=`grep 'PROCDIR' $RUTA_CONFIG | cut -f2 -d':'`
-		INFODIR=`grep 'INFODIR' $RUTA_CONFIG | cut -f2 -d':'`
-		DUPDIR=`grep 'DUPDIR' $RUTA_CONFIG | cut -f2 -d':'`
-		LOGDIR=`grep 'LOGDIR' $RUTA_CONFIG | cut -f2 -d':'`
-		LOGEXT=`grep 'LOGEXT' $RUTA_CONFIG | cut -f2 -d':'`
-		LOGSIZE=`grep 'LOGSIZE' $RUTA_CONFIG | cut -f2 -d':'`
-		DATASIZE=`grep 'DATASIZE' $RUTA_CONFIG | cut -f2 -d':'`
+		GRUPO=`grep 'GRUPO' $RUTA_CONFIG | cut -f2 -d'='`
+		CONFDIR=`grep 'CONFDIR' $RUTA_CONFIG | cut -f2 -d'='`
+		BINDIR=`grep 'BINDIR' $RUTA_CONFIG | cut -f2 -d'='`
+		MAEDIR=`grep 'MAEDIR' $RUTA_CONFIG | cut -f2 -d'='`
+		NOVEDIR=`grep 'NOVEDIR' $RUTA_CONFIG | cut -f2 -d'='`
+		ACEPDIR=`grep 'ACEPDIR' $RUTA_CONFIG | cut -f2 -d'='`
+		RECHDIR=`grep 'RECHDIR' $RUTA_CONFIG | cut -f2 -d'='`		
+		PROCDIR=`grep 'PROCDIR' $RUTA_CONFIG | cut -f2 -d'='`
+		INFODIR=`grep 'INFODIR' $RUTA_CONFIG | cut -f2 -d'='`
+		DUPDIR=`grep 'DUPDIR' $RUTA_CONFIG | cut -f2 -d'='`
+		LOGDIR=`grep 'LOGDIR' $RUTA_CONFIG | cut -f2 -d'='`
+		LOGEXT=`grep 'LOGEXT' $RUTA_CONFIG | cut -f2 -d'='`
+		LOGSIZE=`grep 'LOGSIZE' $RUTA_CONFIG | cut -f2 -d'='`
+		DATASIZE=`grep 'DATASIZE' $RUTA_CONFIG | cut -f2 -d'='`
 		return 0
 	else
 		return 1
@@ -392,13 +445,16 @@ infoInstalacion() {
 	mostrarYLoguear "Directorio para informes y estadísticas: $INFODIR"
 	mostrarYLoguear "Nombre para el repositorio de duplicados: $DUPDIR"
 	mostrarYLoguear "Directorio para Archivos de Log: $LOGDIR"
-	getArchivosEn $LOGDIR
-	if [ $? -eq 0 ]
-	then
-		for archivo in $ARCHIVOS
-		do
-			mostrarYLoguear "	$archivo"
-		done
+	if [ ! "$LOGDIR" = "" ]
+	then	
+		getArchivosEn $LOGDIR
+		if [ $? -eq 0 ]
+		then
+			for archivo in $ARCHIVOS
+			do
+				mostrarYLoguear "	$archivo"
+			done
+		fi
 	fi
 	mostrarYLoguear "Tamaño máximo para los archivos de log del sistema: $LOGSIZE Kb"
 }
@@ -439,13 +495,13 @@ inicializarInstalacion(){
 	
 	if [ $existe -eq 0 ] && [ $version -ge 5 ]
 	then
-		inicializarValoresDefault
-		escribirValorEnConfig "GRUPO" "$GRUPO"
-		escribirValorEnConfig "CONFDIR" "$CONFDIR"
+
 		#Perl 5 o superior esta instalado
-		
+		forzar=0
 		while true
-		do
+		do		
+			escribirValorEnConfig "GRUPO" "$GRUPO"
+			escribirValorEnConfig "CONFDIR" "$CONFDIR"			
 			mostrarYLoguear "TP SO7508 Primer Cuatrimestre 2015. Tema H Copyright © Grupo 4. \nPerl Version: $version"
 			procesarTodo
 			clear
@@ -459,8 +515,9 @@ inicializarInstalacion(){
 				break
 			fi
 			clear
+			forzar=1
 		done
-
+	
 		preguntar "Iniciando Instalación. Esta Ud. seguro? (S - N)"
 		if [ $? -eq 0 ] #no
 		then
@@ -487,20 +544,94 @@ inicializarInstalacion(){
 	fi
 }
 
+chequearFaltantes() {
+	modulos_faltantes=""	
+	if [ "$GRUPO" = "" ]
+	then
+		modulos_faltantes=$modulos_faltantes"GRUPO"
+	fi
+	if [ "$CONFDIR" = "" ]
+	then
+		modulos_faltantes=$modulos_faltantes" CONFDIR"
+	fi
+	if [ "$BINDIR" = "" ]
+	then
+		modulos_faltantes=$modulos_faltantes" BINDIR"
+	fi
+	if [ "$MAEDIR" = "" ]
+	then
+		modulos_faltantes=$modulos_faltantes" MAEDIR"
+	fi 
+	if [ "$NOVEDIR" = "" ]
+	then
+		modulos_faltantes=$modulos_faltantes" NOVEDIR"
+	fi 
+	if [ "$DATASIZE" = "" ]
+	then
+		modulos_faltantes=$modulos_faltantes" DATASIZE"
+	fi 
+	if [ "$ACEPDIR" = "" ]	
+	then
+	echo "SAY WHAT"		
+	modulos_faltantes=$modulos_faltantes" ACEPDIR"
+	fi 
+	if [ "$RECHDIR" = "" ]
+	then
+		modulos_faltantes=$modulos_faltantes" RECHDIR"
+	fi
+	if [ "$PROCDIR" = "" ]
+	then
+		modulos_faltantes=$modulos_faltantes" PROCDIR"
+	fi  
+	if [ "$INFODIR" = "" ]
+	then
+		modulos_faltantes=$modulos_faltantes" INFODIR"
+	fi 
+	if [ "$DUPDIR" = "" ]
+	then
+		modulos_faltantes=$modulos_faltantes" DUPDIR"
+	fi 
+	if [ "$LOGDIR" = "" ]
+	then
+		modulos_faltantes=$modulos_faltantes" LOGDIR"
+	fi 
+	if [ "$LOGSIZE" = "" ]
+	then
+		modulos_faltantes=$modulos_faltantes" LOGSIZE"
+	fi 
+}
+
+obtenerValorVector(){
+	vector=$1
+	indice=$2
+	VALOR_VECTOR=`echo $vector | cut -f $indice -d' '`
+}
+
 #########################
 #########################
 #########################
 #Inicio Script
-
+clear
 echo "Inicio de Ejecución de InsPro"
-#chmod 700 "bin/Glog.sh"
+chmod 700 "bin/Glog.sh"
+
+export GRUPO
+#Me fijo que exista todo lo necesario para que el programa funcione
+verificarArchivosNecesarios
+if [ $? -eq 1 ]; then
+	exit 1
+fi
+if [ ! -d $CONFDIR ]
+then
+	mkdir $CONFDIR
+fi
 
 #INICIALIZO LOG
-export GRUPO
 
 mostrarYLoguear "Log de la instalación: /conf/InsPro.log"	
 mostrarYLoguear "Directorio predefinido de Configuración: $CONFDIR"
 
+inicializarValoresDefault
 existeArchivo "$RUTA_CONFIG"
 
 if [ $? -eq 1 ]
@@ -509,8 +640,35 @@ then
 	inicializarInstalacion
 else
 	#Si existe, comprobar que esta instalado completamente
-	echo "TODO"
-	inicializarInstalacion
+	leerValoresConfig
+	chequearFaltantes
+	infoInstalacion
+	obtenerValorVector "$modulos_faltantes" "1"
+	#No falta nada	
+	if [ "$VALOR_VECTOR" = "" ]
+	then
+		mostrarYLoguear "Estado de la instalación: Completa."
+		echo ""
+		mostrarYLoguear "Proceso de Instalación Cancelado."
+	#Falta algo	
+	else
+		echo ""
+		mostrarYLoguear "Componentes faltantes:" "ERR"
+		for faltante in $modulos_faltantes
+		do
+			mostrarYLoguear "	$faltante" "ERR"
+		done
+
+		mostrarYLoguear "Estado de la instalación: Incompleta."
+		preguntar "Desea completar la instalación? (S-N)"
+		if [ $? -eq 0 ]
+		then
+			MENSAJE_FINAL="Instalacion abortada por el usuario."
+			break
+		else
+			inicializarInstalacion
+		fi
+	fi 
 fi
 
 mostrarYLoguear "$MENSAJE_FINAL"
