@@ -50,7 +50,6 @@ function verificarDuplicado {
 
 function verificarNormaEmisor {
   nxefile="$GRUPO$MAEDIR/tab/nxe.tab"
-  #echo "NXEFILE $nxefile"
   res=$(grep -c "$1;$2" "$nxefile")
   #echo $res
   if [ $res -eq 0 ]; then
@@ -58,7 +57,6 @@ function verificarNormaEmisor {
   else
     return 1
   fi
-<<<<<<< HEAD
 
 }
 
@@ -126,8 +124,6 @@ function validadorRegistro {
         fi
    done < $1
 
-=======
->>>>>>> 8fed0eefbdf41bf45ec523381d61550655b12d5a
 }
 
 # Funcion principal
@@ -167,8 +163,7 @@ function main {
                         grabarLog "Se rechaza el archivo. Emisor no habilitado en este tipo de norma." "WAR"
                         Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$RECHDIR" "ProPro"
                       else
-                         #TODO Falta la validación por registro
-                         echo -e "Falta la validación por registro." 
+                         validadorRegistro "$GRUPO$ACEPDIR/$gestion/$archivo" "$gestion" 
                       fi
                   fi
         done
