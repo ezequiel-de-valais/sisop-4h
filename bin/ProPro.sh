@@ -25,7 +25,7 @@ function grabarLog {
 
 function validarEjecucionIniPro {
 
-  variables=($GRUPO $BINDIR $MAEDIR $ACEPDIR $RECHDIR $PROCDIR)
+  variables=($GRUPO $BINDIR $MAEDIR $NOVEDIR $ACEPDIR $RECHDIR $PROCDIR)
   for var in ${variables[*]}; do
       if [ -z "$var" ]; then
          return 0
@@ -37,7 +37,7 @@ function validarEjecucionIniPro {
 # Verifica que el archivo aceptado no haya sido procesado anteriormente
 
 function verificarDuplicado {
-    grabarLog "$2/$1" INFO
+
   if [ -f "$2/$1" ]; then
     return 0
   else
@@ -67,8 +67,8 @@ function verificarNormaEmisor {
 
 function rechazarRegistro {
 
-   mkdir -p "$GRUPO${PROCDIR}"
-   RECHFILE="$GRUPO${PROCDIR}/$2.rech"
+   mkdir -p "$GRUPO$NOVEDIR$PROCDIR"
+   RECHFILE="$GRUPO$NOVEDIR$PROCDIR/$2.rech"
    echo "$3" >> "$RECHFILE"
    echo "$1" >> "$RECHFILE"
 
@@ -137,7 +137,7 @@ function main {
       grabarLog "No se ejecutará el programa ProPro." "ERR"
    else
       grabarLog "Inicio de ProPro." "INF"
-      cantidadArchivos=`find $GRUPO$ACEPDIR -type f | wc -l`
+      cantidadArchivos=`find $GRUPO$NOVEDIR$ACEPDIR -type f | wc -l`
       grabarLog "Cantidad de archivos a procesar: $cantidadArchivos" "INF"
       MAESTROGESTIONES="$GRUPO$MAEDIR/gestiones.mae"
       while read line || [[ -n "$line" ]]; do 
@@ -145,31 +145,31 @@ function main {
           gestiones+=" "
       done < $MAESTROGESTIONES
       for gestion in ${gestiones[*]}; do
-          if [ `ls $GRUPO$ACEPDIR | grep -c $gestion` != 0 ]; then
-             if [ `ls $GRUPO$ACEPDIR/$gestion | cut -d"_" -f1 | grep -c $gestion` != 0 ]; then #Hay al menos un arch de la gestion
-    fechasordenadas=$(ls $GRUPO$ACEPDIR/$gestion | cut -d"_" -f5 | sort -k1.7 -k1.4 -k1.1)
-    for fecha in $fechasordenadas; do
-        for archivo in `ls $GRUPO$ACEPDIR/$gestion | grep $fecha`; do
-                  grabarLog "Archivo a procesar: $archivo" "INF"
-                  verificarDuplicado "$archivo" "$GRUPO$PROCDIR/proc"
-                  if [ $? == 0 ]; then   #Si esta duplicado
-                    grabarLog "Se rechaza el archivo por estar DUPLICADO." "WAR"
-                    ./Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$RECHDIR" "ProPro"
-                  else
-                      norma=$(echo $archivo | cut -d "_" -f 2)
-                      emisor=$(echo $archivo | cut -d "_" -f 3)
-                      verificarNormaEmisor $norma $emisor
-                      if [ $? == 0 ]; then   #La combinacion COD_NORMA/COD_EMISOR no se encuentra en la tabla nxe.tab
-                        grabarLog "Se rechaza el archivo. Emisor no habilitado en este tipo de norma." "WAR"
-                        Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$RECHDIR" "ProPro"
-                      else
-                         validadorRegistro "$GRUPO$ACEPDIR/$gestion/$archivo" "$gestion" 
-                      fi
-                  fi
-        done
-          done
-       fi
-    fi
+          if [ `ls $GRUPO$NOVEDIR$ACEPDIR | grep -c $gestion` != 0 ]; then
+             if [ `ls $GRUPO$NOVEDIR$ACEPDIR/$gestion | cut -d"_" -f1 | grep -c $gestion` != 0 ]; then #Hay al menos un arch de la gestion
+    		fechasordenadas=$(ls $GRUPO$NOVEDIR$ACEPDIR/$gestion | cut -d"_" -f5 | sort -k1.7 -k1.4 -k1.1)
+   		for fecha in $fechasordenadas; do
+        		for archivo in `ls $GRUPO$NOVEDIR$ACEPDIR/$gestion | grep $fecha`; do
+                  		grabarLog "Archivo a procesar: $archivo" "INF"
+                  		verificarDuplicado "$archivo" "$GRUPO$NOVEDIR$PROCDIR/proc"
+                  		if [ $? == 0 ]; then   #Si esta duplicado
+                   			grabarLog "Se rechaza el archivo por estar DUPLICADO." "WAR"
+                    			./Mover.sh "$GRUPO$NOVEDIR$ACEPDIR/$gestion/$archivo" "$GRUPO$NOVEDIR$RECHDIR" "ProPro"
+                 		 else
+                      			norma=$(echo $archivo | cut -d "_" -f 2)
+                      			emisor=$(echo $archivo | cut -d "_" -f 3)
+                      			verificarNormaEmisor $norma $emisor
+                      			if [ $? == 0 ]; then   #La combinacion COD_NORMA/COD_EMISOR no se encuentra en la tabla nxe.tab
+                        			grabarLog "Se rechaza el archivo. Emisor no habilitado en este tipo de norma." "WAR"
+                        			./Mover.sh "$GRUPO$NOVEDIR$ACEPDIR/$gestion/$archivo" "$GRUPO$NOVEDIR$RECHDIR" "ProPro"
+                      			else
+                         			validadorRegistro "$GRUPO$NOVEDIR$ACEPDIR/$gestion/$archivo" "$gestion" 
+                      			fi
+                  		fi
+        		done
+          	done
+       	     fi
+          fi
       done
    fi 
 
