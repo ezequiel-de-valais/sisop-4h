@@ -61,6 +61,56 @@ function verificarNormaEmisor {
 
 }
 
+# Genera el archivo de registros rechazados
+# $1=registro
+# $2=gestion
+# $3=motivo
+
+function rechazarRegistro {
+
+   mkdir -p "$GRUPO${PROCDIR}"
+   RECHFILE="$GRUPO${PROCDIR}/$2.rech"
+   echo "$3" >> "$RECHFILE"
+   echo "$1" >> "$RECHFILE"
+
+}
+
+# Valida que el registro sea válido
+# $1=registro
+# $2=gestion
+
+function validadorFechaRegistro {
+   
+   aux=$(echo $1 | cut -d";" -f1)
+   fecha=$(echo $aux | cut -d"/" -f2)/$(echo $aux | cut -d"/" -f1)/$(echo $aux | cut -d"/" -f3)
+   date --date="$fecha" +"%m/%d/%Y" 1>/dev/null 2>/dev/null
+   fechaValidar=`date --date="$fecha" +"%m/%d/%Y"`
+   if [ $? == 0 ]; then #la fecha es válida
+      fechaInicialAux=$(grep "^$2;.*;.*;.*;.*$" "$MAESTROGESTIONES" | cut -d ";" -f 2)
+      fechaFinalAux=$(grep "^$2;.*;.*;.*;.*$" "$MAESTROGESTIONES" | cut -d ";" -f 3)
+      aux=$(echo $fechaInicialAux | cut -d"/" -f2)/$(echo $fechaInicialAux | cut -d"/" -f1)/$(echo $fechaInicialAux | cut -d"/" -f3)
+      fechaInicial=`date --date="$aux" +"%m/%d/%Y"`
+      if [[ "$fechaInicial" > "$fechaValidar" ]]; then
+         rechazarRegistro "$1" "$2" "motivo de rechazo = fecha fuera del rango de la gestión"
+         return 1
+      else
+         if [[ "$fechaFinalAux" != "NULL" ]]; then
+            aux=$(echo $fechaFinalAux | cut -d"/" -f2)/$(echo $fechaFinalAux | cut -d"/" -f1)/$(echo $fechaFinalAux | cut -d"/" -f3)
+	    fechaFinal=` date --date="$aux" +"%m/%d/%Y"`
+            if [[ "$fechaFinal" < "$fechaValidar" ]]; then
+               rechazarRegistro "$1" "$2" "motivo de rechazo = fecha fuera del rango de la gestión"
+               return 1
+            fi
+         fi
+      fi
+   else
+      rechazarRegistro "$1" "$2" "motivo de rechazo = fecha invalida" 
+      return 1
+   fi
+   return 0
+
+}
+
 # Valida que el registro sea válido
 # $1=archivo a procesar
 # $2=gestion
@@ -68,28 +118,12 @@ function verificarNormaEmisor {
 function validadorRegistro {
 
    while read line || [[ -n "$line" ]]; do 
-	validarFechaRegistro "$2"
+	validadorFechaRegistro "$line" "$2"
+        if [ $? = 0 ];then
+           #TODO seguir validando
+           echo -e "Tengo que seguir validando"
+        fi
    done < $1
-
-}
-
-# Valida que el registro sea válido
-# $1=gestion
-
-function validadorFechaRegistro {
-   
-   
-
-}
-
-# Genera el archivo de registros rechazados
-# $1=gestion
-# $2=registro
-
-function rechazarRegistro {
-
-   RECHFILE="$GRUPO${PROCDIR}/$1.rech"
-   echo "$2" >> "$RECHFILE"
 
 }
 
@@ -115,7 +149,6 @@ function main {
           gestiones+=$(echo $line | cut -d ";" -f1) 
           gestiones+=" "
       done < $MAESTROGESTIONES
-      echo -e ${gestiones[*]}
       for gestion in ${gestiones[*]}; do
           if [ `ls $GRUPO$NOVEDIR$ACEPDIR | grep -c $gestion` != 0 ]; then
              if [ `ls $GRUPO$NOVEDIR$ACEPDIR/$gestion | cut -d"_" -f1 | grep -c $gestion` != 0 ]; then #Hay al menos un arch de la gestion
