@@ -15,7 +15,27 @@ for file in ${OKfiles[@]}; do
         touch "$dirnovedades$file" 
 done
 
-sleep 5
+OUTOFDATEfiles=("Alfonsin_RES_1001_388_09-12-1983" "Alfonsin_RES_1001_388_10-11-1983" "Alfonsin_RES_1001_388_10-12-1982" "Alfonsin_RES_1001_388_08-07-1989" "Alfonsin_RES_1001_388_07-08-1989" "Alfonsin_RES_1001_388_07-07-1990" )
+for file in ${OUTOFDATEfiles[@]}; do
+        touch "$dirnovedades$file" 
+done
+
+MALEMISORONORMAfiles=("Alfonsin_ZZZ_1001_388_23-05-1989" "Alfonsin_RES_9999_388_09-12-1983" )
+for file in ${MALEMISORONORMAfiles[@]}; do
+        touch "$dirnovedades$file" 
+done
+
+MALAGESTIONfiles=("Zarasa_RES_1001_388_23-05-1989" )
+for file in ${MALAGESTIONfiles[@]}; do
+        touch "$dirnovedades$file" 
+done
+
+MALNUMEROfiles=("Alfonsin_RES_1001_3ASD88_23-05-1989" )
+for file in ${MALNUMEROfiles[@]}; do
+        touch "$dirnovedades$file" 
+done
+
+sleep 8
 
 ### CASOS BASE
 aprotoc="$GRUPO$ACEPDIR/"
@@ -38,6 +58,34 @@ else
 	echo "ERROR en casos base"
 fi
 
+function estanEnRechazados() {
+        sol="0"
+        #arreglo="${1[@]}"
+        #echo "$arreglo"
+        arreglo=("${@}") #todos los parametros
+
+        rechdir="$GRUPO$RECHDIR/"
+        for aFile in ${arreglo[@]}; do
+                file="$rechdir$aFile"
+                if [ -f "$file" ]; then
+                        echo "todo OK $aFile"
+                        rm $file
+                else
+                        sol="1"
+                        echo "ERROR no Existe $aFile"
+                fi
+        done
+
+        if [ "$sol" -eq "0" ]; then
+                echo "OK en casos MALOS"
+        else
+                echo "ERROR en casos MALOS"
+        fi
+}
+estanEnRechazados "${OUTOFDATEfiles[@]}"
+estanEnRechazados "${MALEMISORONORMAfiles[@]}"
+estanEnRechazados "${MALAGESTIONfiles[@]}"
+estanEnRechazados "${MALNUMEROfiles[@]}"
 
 dir=$(pwd)
 cd "$GRUPO$BINDIR"

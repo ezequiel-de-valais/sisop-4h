@@ -16,6 +16,12 @@ GESTIONES="$GRUPO$MAEDIR/gestiones.mae"
 ACEPTADOS="$GRUPO$ACEPDIR/"
 RECHAZADOS="$GRUPO$RECHDIR/"
 
+#TODO:Rechazar los archivos inválidos
+#• Si el archivo viene vacio, rechazarlo
+#• Si el archivo no es un archivo común, de texto (si es una imagen, un comprimido, etc),
+#rechazarlo
+
+
 # Devuelve en la variable cantidad_archivos
 # la cantidad en el directorio $NOVEDADES
 function hay_archivos() {
