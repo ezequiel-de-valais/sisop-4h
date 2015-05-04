@@ -83,27 +83,24 @@ generar_log
 # Si es del instalador va en otro lado
 if [[ -z $LOGDIR ]]; then
     if [[ -z $GRUPO ]]; then
-        echo -e "NO SE EXPORTO LA VARIABLE GRUPO NI LOGDIR."
-        echo -e "SE CREARÁ LA CARPETA LOG EN EL DIRECTORIO ACTUAL."
-	GRUPO=.
-        LOGDIR=/log
-    else
-	LOGDIR="${GRUPO}/log/"
+        echo "NO SE EXPORTO LA VARIABLE GRUPO NI LOGDIR"
+        exit 1
     fi
+    LOGDIR="${GRUPO}/conf/" #conf debe existir
     LOGSIZE=400
 else
     #asumo GRUPO existe
-    #LOGDIR="$GRUPO$LOGDIR/"
+    LOGDIR="$GRUPO$LOGDIR/"
     if [[ -z $LOGSIZE ]]; then
         LOGSIZE=400
     fi
 fi
 
 #echo "LOGSIZE=$LOGSIZE"
-mkdir -p "$GRUPO$LOGDIR"
+mkdir -p "$LOGDIR"
 
 #LOGFILE="$GRUPO${LOGDIR}/$COMANDO.log"
-LOGFILE="$GRUPO${LOGDIR}/$COMANDO.log"
+LOGFILE="${LOGDIR}$COMANDO.log"
 
 #echo "LOGFILE: $LOGFILE"
 echo "$log" >> "$LOGFILE"
