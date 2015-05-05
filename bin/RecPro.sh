@@ -149,7 +149,9 @@ do
 			cantidad=$(ls -1 "$ACEPTADOS/$subdirectorio"| wc -l)
 			if [ $cantidad -gt 0 ];then
 				./Start.sh ProPro.sh
-				./Glog.sh "RecPro.sh" "ProPro corriendo bajo el no.: <>" INFO
+				ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "RecPro.sh" | grep "ProPro.sh")
+				PID=$(echo $ProcesosCorriendo | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
+				./Glog.sh "RecPro.sh" "ProPro corriendo bajo el no.: <$PID>" INFO
 				break
 			fi
 		done
