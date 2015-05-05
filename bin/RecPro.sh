@@ -8,7 +8,7 @@
 # Duerme 
 
 # Tiempo que duerme
-intervalo=3
+intervalo=10
 NOVEDADES="$GRUPO$NOVEDIR/"
 EMISORES="$GRUPO$MAEDIR/emisores.mae"
 NORMAS="$GRUPO$MAEDIR/normas.mae"
@@ -145,7 +145,16 @@ do
 	else 
 		#Ir a directorio de ACEPTADOS
 		#Invocar a ProPro
-		ciclo=$ciclo	
+		for subdirectorio in $(ls -1 "$ACEPTADOS");do
+			cantidad=$(ls -1 "$ACEPTADOS/$subdirectorio"| wc -l)
+			if [ $cantidad -gt 0 ];then
+				./Start.sh ProPro.sh
+				./Glog.sh "RecPro.sh" "ProPro corriendo bajo el no.: <>" INFO
+				break
+			fi
+		done
+		./Glog.sh "RecPro.sh" "Invocacion de ProPro pospuesta para el siguiente ciclo"
+		#ciclo=$ciclo	
 	fi
 
 	sleep $intervalo
