@@ -72,8 +72,8 @@ function rechazarRegistro {
    registro+="$3;"
    registro+="$1"
 
-   mkdir -p "$GRUPO$NOVEDIR$PROCDIR"
-   RECHFILE="$GRUPO$NOVEDIR$PROCDIR/$2.rech"
+   mkdir -p "$GRUPO$PROCDIR"
+   RECHFILE="$GRUPO$PROCDIR/$2.rech"
    echo $registro >> "$RECHFILE"
 
 }
@@ -103,8 +103,8 @@ function armarRegistroHistorico {
    anioNorma=$(echo $3 | cut -d"_" -f5 | cut -d"-" -f3)
    codNorma=$(echo $3 | cut -d"_" -f2)
 
-   mkdir -p "$GRUPO$NOVEDIR$PROCDIR/$2"
-   REGFILE="$GRUPO$NOVEDIR$PROCDIR/$2/$anioNorma.$codNorma"
+   mkdir -p "$GRUPO$PROCDIR/$2"
+   REGFILE="$GRUPO$PROCDIR/$2/$anioNorma.$codNorma"
    echo $registro >> "$REGFILE"
 
 }
@@ -139,8 +139,8 @@ function armarRegistroCorriente {
    anioNorma=$(echo $3 | cut -d"_" -f5 | cut -d"-" -f3)
    codNorma=$(echo $3 | cut -d"_" -f2)
 
-   mkdir -p "$GRUPO$NOVEDIR$PROCDIR/$2"
-   REGFILE="$GRUPO$NOVEDIR$PROCDIR/$2/$anioNorma.$codNorma"
+   mkdir -p "$GRUPO$PROCDIR/$2"
+   REGFILE="$GRUPO$PROCDIR/$2/$anioNorma.$codNorma"
    echo $registro >> "$REGFILE"
 
 }
@@ -284,7 +284,7 @@ function procesarArchivo {
      	      fi
            fi
         fi
-   done < $GRUPO$NOVEDIR$ACEPDIR/$gestion/$1
+   done < $GRUPO$ACEPDIR/$gestion/$1
 
 }
 
@@ -318,7 +318,7 @@ function main {
       grabarLog "No se ejecutará el programa ProPro." "ERR"
    else
       grabarLog "Inicio de ProPro." "INF"
-      cantidadArchivos=`find $GRUPO$NOVEDIR$ACEPDIR -type f | wc -l`
+      cantidadArchivos=`find $GRUPO$ACEPDIR -type f | wc -l`
       grabarLog "Cantidad de archivos a procesar: $cantidadArchivos" "INF"
       MAESTROGESTIONES="$GRUPO$MAEDIR/gestiones.mae"
       gestiones=""
@@ -348,16 +348,16 @@ function main {
       cantidadArchivosProcesados=0
       cantidadArchivosRechazados=0
       for gestion in ${gestiones[*]}; do
-          if [ `ls $GRUPO$NOVEDIR$ACEPDIR | grep -xc $gestion` != 0 ]; then
-             if [ `ls $GRUPO$NOVEDIR$ACEPDIR/$gestion | cut -d"_" -f1 | grep -c $gestion` != 0 ]; then #Hay al menos un arch de la gestion
-    		fechasordenadas=$(ls $GRUPO$NOVEDIR$ACEPDIR/$gestion | cut -d"_" -f5 | sort -k1.7 -k1.4 -k1.1)
+          if [ `ls $GRUPO$ACEPDIR | grep -xc $gestion` != 0 ]; then
+             if [ `ls $GRUPO$ACEPDIR/$gestion | cut -d"_" -f1 | grep -c $gestion` != 0 ]; then #Hay al menos un arch de la gestion
+    		fechasordenadas=$(ls $GRUPO$ACEPDIR/$gestion | cut -d"_" -f5 | sort -k1.7 -k1.4 -k1.1)
    		for fecha in $fechasordenadas; do
-        		for archivo in `ls $GRUPO$NOVEDIR$ACEPDIR/$gestion | grep $fecha`; do
+        		for archivo in `ls $GRUPO$ACEPDIR/$gestion | grep $fecha`; do
                   		grabarLog "Archivo a procesar: $archivo" "INF"
-                  		verificarDuplicado "$archivo" "$GRUPO$NOVEDIR$PROCDIR/proc"
+                  		verificarDuplicado "$archivo" "$GRUPO$PROCDIR/proc"
                   		if [ $? == 0 ]; then   #Si esta duplicado
                    			grabarLog "Se rechaza el archivo por estar DUPLICADO." "WAR"
-                    			./Mover.sh "$GRUPO$NOVEDIR$ACEPDIR/$gestion/$archivo" "$GRUPO$NOVEDIR$RECHDIR" "ProPro"
+                    			./Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$RECHDIR" "ProPro"
 					(( cantidadArchivosRechazados++ ))
                  		 else
                       			norma=$(echo $archivo | cut -d "_" -f 2)
@@ -365,12 +365,12 @@ function main {
                       			verificarNormaEmisor $norma $emisor
                       			if [ $? == 0 ]; then   #La combinacion COD_NORMA/COD_EMISOR no se encuentra en la tabla nxe.tab
                         		    grabarLog "Se rechaza el archivo. Emisor no habilitado en este tipo de norma." "WAR"
-                        		    ./Mover.sh "$GRUPO$NOVEDIR$ACEPDIR/$gestion/$archivo" "$GRUPO$NOVEDIR$RECHDIR" "ProPro"
+                        		    ./Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$RECHDIR" "ProPro"
 					    (( cantidadArchivosRechazados++ ))
                       			else
                          		    procesarArchivo "$archivo" "$gestion" 
-					    mkdir -p "$GRUPO$NOVEDIR$PROCDIR/proc"
-					    ./Mover.sh "$GRUPO$NOVEDIR$ACEPDIR/$gestion/$archivo" "$GRUPO$NOVEDIR$PROCDIR/proc" "ProPro"
+					    mkdir -p "$GRUPO$PROCDIR/proc"
+					    ./Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$PROCDIR/proc" "ProPro"
 					    (( cantidadArchivosProcesados++ ))
                       			fi
                   		fi
