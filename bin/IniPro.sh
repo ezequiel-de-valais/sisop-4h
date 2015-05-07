@@ -17,7 +17,7 @@
 
 function grabarLog {
 
-   ./Glog.sh "IniPro" "$1" "$2"
+   Glog.sh "IniPro" "$1" "$2"
 
 }
 
@@ -190,56 +190,71 @@ function lanzarRecPro {
 
 function mostrarMensajeInstalacionFinalizada {
 
-	CONFDIR=$GRUPO/conf
-	dirconf=`ls $CONFDIR`
-	dirbin=`ls $GRUPO$BINDIR`
-	dirmae=`ls -R $GRUPO$MAEDIR`
-	dirlog=`ls $GRUPO$LOGDIR`
+	CONFDIR=${GRUPO}conf
+	dirconf=`ls $CONFDIR | tr "\n" " "`
+	dirbin=`ls $GRUPO$BINDIR | tr "\n" " "`
+	dirmae=`ls -R $GRUPO$MAEDIR | tr "\n" " "`
+	dirlog=`ls $GRUPO$LOGDIR | tr "\n" " "`
 
-	procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
+        mensaje="Directorio de Configuración: $CONFDIR"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje"
 
-	mensaje="TP SO7508 Primer Cuatrimestre 2015. Tema H Copyright (c) Grupo 04.
+        mensaje="Archivos: $dirconf"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje\n"
 
-Directorio de Configuración: $CONFDIR
+        mensaje="Directorio de Ejecutables: $GRUPO$BINDIR"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje"
 
-Archivos: 
-$dirconf
+        mensaje="Archivos: $dirbin"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje\n"
 
+        mensaje="Directorio de Maestros y Tablas: $GRUPO$MAEDIR"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje"
 
-Directorio de Ejecutables: $GRUPO$BINDIR
+        mensaje="Archivos: $dirmae"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje\n"
 
-Archivos: 
-$dirbin
+        mensaje="Directorio de recepción de documentos para protocolización: $GRUPO$NOVEDIR"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje\n"
 
+        mensaje="Directorio de Archivos Aceptados: $GRUPO$ACEPDIR"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje\n"
 
-Directorio de Maestros y Tablas: $GRUPO$MAEDIR
+        mensaje="Directorio de Archivos Rechazados: $GRUPO$RECHDIR"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje\n"
 
-Archivos: 
-$dirmae
+        mensaje="Directorio de Archivos Protocolizados: $GRUPO$PROCDIR"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje\n"
 
+        mensaje="Directorio para informes y estadísticas: $GRUPO$INFODIR"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje\n"
 
-Directorio de recepción de documentos para protocolización: $GRUPO$NOVEDIR
+        mensaje="Nombre para el repositorio de duplicados: $GRUPO$DUPDIR"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje\n"
 
-Directorio de Archivos Aceptados: $GRUPO$NOVEDIR$ACEPDIR
+        mensaje="Directorio para Archivos de Log: $GRUPO$LOGDIR"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje"
 
-Directorio de Archivos Rechazados: $GRUPO$NOVEDIR$RECHDIR
+        mensaje="Archivos: $dirlog"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje\n"
 
-Directorio de Archivos Protocolizados: $GRUPO$NOVEDIR$PROCDIR
-
-Directorio para informes y estadísticas: $GRUPO$NOVEDIR$INFODIR
-
-Nombre para el repositorio de duplicados: $GRUPO$NOVEDIR$DUPCDIR
-
-Directorio para Archivos de Log: $GRUPO$LOGDIR
-
-Archivos: 
-$dirlog
-
-
-Estado del Sistema: INICIALIZADO"
-
-	grabarLog "$mensaje" "INF"
-	echo "$mensaje"
+        mensaje="Estado del Sistema: INICIALIZADO"
+  	grabarLog "$mensaje" "INF"
+	echo -e "$mensaje\n"
 
 }
 
@@ -257,9 +272,9 @@ function main {
    if [ "true" == "`env | grep INICIALIZADO | cut -d"=" -f 2`" ]
    then
       echo -e "Ambiente ya inicializado, si quiere reiniciar termine su sesión e ingrese nuevamente."
-      grabarLog "Ambiente ya inicializado, si quiere reiniciar termine su sesión e ingrese nuevamente." "INF"
+      grabarLog "Ambiente ya inicializado, si quiere reiniciar termine su sesión e ingrese nuevamente." "WAR"
    else
-      echo -e "Comenzando a inicializar el ambiente."
+      echo -e "Comenzando a inicializar el ambiente.\n"
       chequearVariables
       chequearComandos
       chequearPaths
@@ -267,34 +282,33 @@ function main {
       chequearTablas
 
       if [ false == $error ]; then
-
+         mostrarMensajeInstalacionFinalizada
          lanzarRecPro
          if [ $? == 1 ]; then
-	   msj="\n-Usted ha elegido no arrancar RecPro, \npara hacerlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Start.sh RecPro.sh\n"
+	   msj="-Usted ha elegido no arrancar RecPro, para hacerlo manualmente debe hacerlo de la siguiente manera: Uso: Start.sh RecPro.sh"
 	   echo -e $msj
 	   grabarLog "Se ha elegido no arrancar RecPro" "INF"
          else
 	   chequearRecPro
 	   if [ $? == 0 ]; then
 	      Start.sh "RecPro.sh"
-	      msj="\n-Usted ha elegido arrancar RecPro, \npara frenarlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Stop.sh RecPro.sh\n"
+	      msj="-Usted ha elegido arrancar RecPro, para frenarlo manualmente debe hacerlo de la siguiente manera: Uso: Stop.sh RecPro.sh"
 	      echo -e $msj
 	      procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 	      echo -e "proc: $procssid"
 	      grabarLog "proc: $procssid" "INF"
 	   else
-	      msj="\n-RecPro ya iniciado, \npara frenarlo manualmente debe hacerlo de la siguiente manera: \nUso: ./Stop.sh RecPro.sh\n"
+	      msj="-RecPro ya iniciado, para frenarlo manualmente debe hacerlo de la siguiente manera: Uso: Stop.sh RecPro.sh"
 	      echo -e $msj
 	      grabarLog "RecPro ya iniciado" "ERR"
 	      procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 	      echo -e "proc: $procssid"
 	      grabarLog "RecPro.sh proc: $procssid" "ERR"
 	   fi
-         fi
-	 mostrarMensajeInstalacionFinalizada
+         fi	 
 	 export INICIALIZADO=true
       else
-         msj="Error en la inicialización del ambiente. \nRevise el log para mayor información."
+         msj="Error en la inicialización del ambiente. Revise el log para mayor información."
 	 echo -e $msj
 	 export INICIALIZADO=false
       fi

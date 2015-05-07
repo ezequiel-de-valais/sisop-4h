@@ -4,8 +4,8 @@
 #
 # ARCHIVO: ProPro.sh
 #
-# DESCRIPCION: Protocoliza los archivos que se encuentran 
-#  dentro de la carpeta $GRUPO$NOVEDIR$ACEPDIR
+# DESCRIPCION: Protocoliza los archivos que se encuentran s
+#  dentro de la carpeta $GRUPO$ACEPDIR
 # 
 # AUTOR: Solotun, Roberto. 
 # PADRON: 85557
@@ -17,7 +17,7 @@
 # $2 = tipo (INF WAR ERR)
 
 function grabarLog {
-   ./Glog.sh "ProPro" "$1" "$2"
+   Glog.sh "ProPro" "$1" "$2"
 
 }
 
@@ -25,7 +25,7 @@ function grabarLog {
 
 function validarEjecucionIniPro {
 
-  variables=($GRUPO $BINDIR $MAEDIR $NOVEDIR $ACEPDIR $RECHDIR $PROCDIR)
+  variables=($GRUPO $BINDIR $MAEDIR $ACEPDIR $RECHDIR $PROCDIR)
   for var in ${variables[*]}; do
       if [ -z "$var" ]; then
          return 0
@@ -100,7 +100,7 @@ function armarRegistroHistorico {
    registro+=$(echo $3 | cut -d"_" -f2)";"
    registro+=$(echo $3 | cut -d"_" -f3)
 
-   anioNorma=$(echo $3 | cut -d"_" -f5 | cut -d"-" -f3)
+   anioNorma=$(echo $1 | cut -d";" -f1 | cut -d"/" -f3)
    codNorma=$(echo $3 | cut -d"_" -f2)
 
    mkdir -p "$GRUPO$PROCDIR/$2"
@@ -200,20 +200,19 @@ function validadorFechaRegistro {
    aux=$(echo $1 | cut -d";" -f1)
    fecha=$(echo $aux | cut -d"/" -f3)$(echo $aux | cut -d"/" -f2)$(echo $aux | cut -d"/" -f1)
    date --date="$fecha" +"%Y%m%d" 1>/dev/null 2>/dev/null
-   fechaValidar=`date --date="$fecha" +"%Y%m%d"`
    if [ $? == 0 ]; then #la fecha es válida
       fechaInicialAux=$(grep "^$2;.*;.*;.*;.*$" "$MAESTROGESTIONES" | cut -d ";" -f 2)
       fechaFinalAux=$(grep "^$2;.*;.*;.*;.*$" "$MAESTROGESTIONES" | cut -d ";" -f 3)
-      aux=$(echo $fechaInicialAux | cut -d"/" -f3)$(echo $fechaInicialAux | cut -d"/" -f2)$(echo $fechaInicialAux | cut -d"/" -f1)
-      fechaInicial=`date --date="$aux" +"%Y%m%d"`
-      if [[ $fechaInicial > $fechaValidar ]]; then
+      fechaInicial=$(echo $fechaInicialAux | cut -d"/" -f3)$(echo $fechaInicialAux | cut -d"/" -f2)$(echo $fechaInicialAux | cut -d"/" -f1)
+      date --date="$fechaInicial" +"%Y%m%d" 1>/dev/null 2>/dev/null
+      if [[ $fechaInicial > $fecha ]]; then
          rechazarRegistro "$1" "$2" "motivo de rechazo = fecha fuera del rango de la gestión" "$3"
          return 1
       else
          if [[ "$fechaFinalAux" != "NULL" ]]; then
-            aux=$(echo $fechaFinalAux | cut -d"/" -f3)$(echo $fechaFinalAux | cut -d"/" -f2)$(echo $fechaFinalAux | cut -d"/" -f1)
-	    fechaFinal=` date --date="$aux" +"%Y%m%d"`
-            if [[ $fechaFinal < $fechaValidar ]]; then
+            fechaFinal=$(echo $fechaFinalAux | cut -d"/" -f3)$(echo $fechaFinalAux | cut -d"/" -f2)$(echo $fechaFinalAux | cut -d"/" -f1)
+      	    date --date="$fechaFinal" +"%Y%m%d" 1>/dev/null 2>/dev/null
+            if [[ $fechaFinal < $fecha ]]; then
                rechazarRegistro "$1" "$2" "motivo de rechazo = fecha fuera del rango de la gestión" "$3"
                return 1
             fi
@@ -269,22 +268,61 @@ function validadorFirmaRegistro {
 function procesarArchivo {
 
    while read line || [[ -n "$line" ]]; do 
-	validadorFechaRegistro "$line" "$2" "$1"
+        validarRegistro "$line" "$2" "$1"
         if [ $? = 0 ];then
-           codNorma=$(echo $line | cut -d";" -f2)
-           if [ "$codNorma" != "" ]; then #es un registro histórico
-              validadorNroNormaRegistro "$line" "$2" "$1"
-              if [ $? = 0 ];then
-                 armarRegistroHistorico "$line" "$2" "$1"
-              fi
-           else #es un registro corriente
-              validadorFirmaRegistro "$line" "$2" "$1"
-              if [ $? = 0 ];then 
-                 armarRegistroCorriente "$line" "$2" "$1"
-     	      fi
+	   validadorFechaRegistro "$line" "$2" "$1"
+           if [ $? = 0 ];then
+           	codNorma=$(echo $line | cut -d";" -f2)
+          	if [ "$codNorma" != "" ]; then #es un registro histórico
+              	    validadorNroNormaRegistro "$line" "$2" "$1"
+              	    if [ $? = 0 ];then
+                 	armarRegistroHistorico "$line" "$2" "$1"
+              	    fi
+              	else #es un registro corriente
+              	    validadorFirmaRegistro "$line" "$2" "$1"
+              	    if [ $? = 0 ];then 
+              	    	armarRegistroCorriente "$line" "$2" "$1"
+              	    fi
+		fi
            fi
         fi
    done < $GRUPO$ACEPDIR/$gestion/$1
+
+}
+
+# Valida el formato de un registro
+# $1=registro a validar
+# $2=gestion
+# $3=archivo
+
+function validarRegistro {
+
+   fechaNorma=$(echo $1 | cut -d";" -f1)
+   nroNorma=$(echo $1 | cut -d";" -f2)
+   codFirma=$(echo $1 | cut -d";" -f8)
+   cantSeparadores=$(grep -o ";" <<< "$1" | wc -l)
+   if [ "$cantSeparadores" -lt 8 ]; then
+     rechazarRegistro "$1" "$2" "motivo de rechazo = menor cantidad de campos que la esperada" "$3"
+     return 1
+   else
+     if [ -z "$fechaNorma" ]; then 
+	rechazarRegistro "$1" "$2" "motivo de rechazo = fecha invalida" "$3"
+     	return 1
+     else
+        cantNrosNroNorma=$(grep -o [[:digit:]] <<< $nroNorma | wc -l)
+        cantLetrasNroNorma=$(grep -o [[:alpha:]] <<< $nroNorma | wc -l)
+	if [ "$cantNrosNroNorma" -ge 0  -a "$cantLetrasNroNorma" -gt 0 ]; then
+	   rechazarRegistro "$1" "$2" "motivo de rechazo = campo Nro de Norma no numérico" "$3"
+     	   return 1
+	else
+	   if [ -z "$codFirma" ]; then
+	   	rechazarRegistro "$1" "$2" "motivo de rechazo = no se informa la firma" "$3"
+    	   	return 1
+	   fi
+	fi
+     fi
+   fi
+   return 0
 
 }
 
@@ -357,7 +395,7 @@ function main {
                   		verificarDuplicado "$archivo" "$GRUPO$PROCDIR/proc"
                   		if [ $? == 0 ]; then   #Si esta duplicado
                    			grabarLog "Se rechaza el archivo por estar DUPLICADO." "WAR"
-                    			./Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$RECHDIR" "ProPro"
+                    			Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$RECHDIR" "ProPro"
 					(( cantidadArchivosRechazados++ ))
                  		 else
                       			norma=$(echo $archivo | cut -d "_" -f 2)
@@ -365,12 +403,12 @@ function main {
                       			verificarNormaEmisor $norma $emisor
                       			if [ $? == 0 ]; then   #La combinacion COD_NORMA/COD_EMISOR no se encuentra en la tabla nxe.tab
                         		    grabarLog "Se rechaza el archivo. Emisor no habilitado en este tipo de norma." "WAR"
-                        		    ./Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$RECHDIR" "ProPro"
+                        		    Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$RECHDIR" "ProPro"
 					    (( cantidadArchivosRechazados++ ))
                       			else
                          		    procesarArchivo "$archivo" "$gestion" 
 					    mkdir -p "$GRUPO$PROCDIR/proc"
-					    ./Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$PROCDIR/proc" "ProPro"
+					    Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$PROCDIR/proc" "ProPro"
 					    (( cantidadArchivosProcesados++ ))
                       			fi
                   		fi
@@ -383,7 +421,7 @@ function main {
 	 chmod 666 $GRUPO$MAEDIR/tab/axg.tab
 	 grabarLog "Tabla de contadores preservada antes de su modificación en MAEDIR/tab/ant" "INF"
          mkdir -p "$GRUPO$MAEDIR/tab/ant/"
-	 ./Mover.sh "$GRUPO$MAEDIR/tab/axg.tab" "$GRUPO$MAEDIR/tab/ant" "ProPro"
+	 Mover.sh "$GRUPO$MAEDIR/tab/axg.tab" "$GRUPO$MAEDIR/tab/ant" "ProPro"
 	 guardarNuevaTablaAXG
 	 chmod 444 $GRUPO$MAEDIR/tab/ant/axg.tab
 	 chmod 444 $GRUPO$MAEDIR/tab/axg.tab
