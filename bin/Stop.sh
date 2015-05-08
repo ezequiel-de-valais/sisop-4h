@@ -16,9 +16,9 @@ ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "Stop.sh" | gr
 PIDproceso=$(echo "$ProcesosCorriendo" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 if [ "$PIDproceso" == "" ]; then
 
-	./Glog.sh $Command "proceso no existe" WAR
+	Glog.sh $Command "proceso no existe" WAR
 else
-	./Glog.sh $Command "matar proceso" INFO
+	Glog.sh $Command "matar proceso" INFO
 	kill "$PIDproceso"
 	#TODO: revisar proceso no existe
 	#TODO: hacer while por si existe mas de un proceso con el nombre o algo asi

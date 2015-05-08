@@ -19,9 +19,9 @@ PIDproceso=$(echo $ProcesosCorriendo | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 if [ "$PIDproceso" == "" ]; then
 	# Inicio el proceso
 	bash $Proceso &
-	./Glog.sh "Start" "Inicio de Demonio" INFO
+	Glog.sh "Start" "Inicio de Demonio" INFO
 else
-	./Glog.sh "Start" "Demonio ya iniciado" WAR
+	Glog.sh "Start" "Demonio ya iniciado" WAR
 fi
 
  
