@@ -148,15 +148,21 @@ do
 		for subdirectorio in $(ls -1 "$ACEPTADOS");do
 			cantidad=$(ls -1 "$ACEPTADOS/$subdirectorio"| wc -l)
 			if [ $cantidad -gt 0 ];then
-				Start.sh ProPro.sh
 				ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "RecPro.sh" | grep "ProPro.sh")
 				PID=$(echo $ProcesosCorriendo | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
+				if [ "$PID" = "" ]; then
+					Start.sh ProPro.sh
+					ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "RecPro.sh" | grep "ProPro.sh")
+	                                PID=$(echo $ProcesosCorriendo | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
+				else
+					Glog.sh "RecPro.sh" "Invocacion de ProPro pospuesta para el siguiente ciclo" INFO
+				
+				fi
 				Glog.sh "RecPro.sh" "ProPro corriendo bajo el no.: <$PID>" INFO
 				break
 			fi
 		done
-		Glog.sh "RecPro.sh" "Invocacion de ProPro pospuesta para el siguiente ciclo"
-		#ciclo=$ciclo	
+			
 	fi
 
 	sleep $intervalo
