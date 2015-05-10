@@ -22,6 +22,7 @@ RUTA_CONFIG="$CONFDIR/InsPro.conf"
 USER_NAME=`whoami`
 COMANDOS="Glog.sh InfPro.pl IniPro.sh Mover.sh ProPro.sh RecPro.sh Start.sh Stop.sh"
 
+
 #loguear mensajes de instalador
 
 log() {
@@ -500,11 +501,14 @@ inicializarInstalacion(){
 		forzar=0
 		while true
 		do		
-			escribirValorEnConfig "GRUPO" "$GRUPO"
-			escribirValorEnConfig "CONFDIR" "$CONFDIR"			
-			mostrarYLoguear "TP SO7508 Primer Cuatrimestre 2015. Tema H Copyright © Grupo 4. \nPerl Version: $version"
-			procesarTodo
+			if [ $faltaInstalar -eq 0 ]; then
+				escribirValorEnConfig "GRUPO" "$GRUPO"
+				escribirValorEnConfig "CONFDIR" "$CONFDIR"			
+				mostrarYLoguear "TP SO7508 Primer Cuatrimestre 2015. Tema H Copyright © Grupo 4. \nPerl Version: $version"
+				procesarTodo
+			fi
 			clear
+			faltaInstalar=0			
 			leerValoresConfig
 			infoInstalacion
 			mostrarYLoguear "Estado de la instalacion: LISTA"
@@ -571,9 +575,8 @@ chequearFaltantes() {
 		modulos_faltantes=$modulos_faltantes" DATASIZE"
 	fi 
 	if [ "$ACEPDIR" = "" ]	
-	then
-	echo "SAY WHAT"		
-	modulos_faltantes=$modulos_faltantes" ACEPDIR"
+	then	
+		modulos_faltantes=$modulos_faltantes" ACEPDIR"
 	fi 
 	if [ "$RECHDIR" = "" ]
 	then
@@ -607,6 +610,53 @@ obtenerValorVector(){
 	VALOR_VECTOR=`echo $vector | cut -f $indice -d' '`
 }
 
+chequearInstalacion(){
+	if [ ! -d $BINDIR ]; then
+		faltaInstalar=1
+		return
+	fi
+	if [ ! -d $MAEDIR ]; then
+		faltaInstalar=1
+		return
+	fi
+	if [ ! -d $MAEDIR/tab ]; then
+		faltaInstalar=1
+		return
+	fi
+	if [ ! -d $MAEDIR/tab/ant ]; then
+		faltaInstalar=1
+		return
+	fi
+	if [ ! -d $NOVEDIR ]; then
+		faltaInstalar=1
+		return
+	fi
+	if [ ! -d $ACEPDIR ]; then
+		faltaInstalar=1
+		return
+	fi
+	if [ ! -d $RECHDIR ]; then
+		faltaInstalar=1
+		return
+	fi
+	if [ ! -d $PROCDIR ]; then
+		faltaInstalar=1
+		return
+	fi
+	if [ ! -d $PROCDIR/proc ]; then
+		faltaInstalar=1
+		return
+	fi
+	if [ ! -d $INFODIR ]; then
+		faltaInstalar=1
+		return
+	fi
+	if [ ! -d $LOGDIR ]; then
+		faltaInstalar=1
+		return
+	fi
+}
+
 #########################
 #########################
 #########################
@@ -633,7 +683,7 @@ mostrarYLoguear "Directorio predefinido de Configuración: $CONFDIR"
 
 inicializarValoresDefault
 existeArchivo "$RUTA_CONFIG"
-
+faltaInstalar=0
 if [ $? -eq 1 ]
 then
 	#Si no existe, iniciar instalacion
@@ -642,16 +692,22 @@ else
 	#Si existe, comprobar que esta instalado completamente
 	leerValoresConfig
 	chequearFaltantes
-	infoInstalacion
 	obtenerValorVector "$modulos_faltantes" "1"
-	#No falta nada	
+	#Se definieron todos los directorios, falta ver si se crearon
 	if [ "$VALOR_VECTOR" = "" ]
 	then
-		mostrarYLoguear "Estado de la instalación: Completa."
-		echo ""
-		mostrarYLoguear "Proceso de Instalación Cancelado."
+		chequearInstalacion
+		if [ $faltaInstalar -eq 1 ] 
+		then
+			inicializarInstalacion
+		else		
+			mostrarYLoguear "Estado de la instalación: Completa."
+			echo ""
+			mostrarYLoguear "Proceso de Instalación Cancelado."
+		fi
 	#Falta algo	
 	else
+		infoInstalacion		
 		echo ""
 		mostrarYLoguear "Componentes faltantes:" "ERR"
 		for faltante in $modulos_faltantes
