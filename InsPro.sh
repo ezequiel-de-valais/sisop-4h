@@ -155,9 +155,8 @@ nombreDirValido() {
 		return 0
 	fi
 	
-	if [ "$1" == "conf" ] || [ "$1" == "pruebas" ]
+	if [ "$1" = "conf" ] || [ "$1" = "pruebas" ]
 	then
-		"Los directorios 'conf' y 'pruebas' ya están siendo utilizados por el sistema, eliga otro directorio. "
 		return 1
 	fi
 	dif=`echo $1 | sed 's,[^0-9a-zA-Z/ ],,g'`
@@ -237,9 +236,9 @@ procesarDirectorio(){
 	valor=`grep "$directorio" $RUTA_CONFIG | cut -f2 -d'='`
 	if [ "$valor" = "" ] || [ "$forzar" = 1 ]
 	then
+		mostrarYLoguear "$mensaje" 		
 		while true
 		do
-			mostrarYLoguear "$mensaje" 
 			read valor
 			nombreDirValido $valor
 			if [ $? -eq 1 ]
@@ -681,9 +680,10 @@ fi
 mostrarYLoguear "Log de la instalación: /conf/InsPro.log"	
 mostrarYLoguear "Directorio predefinido de Configuración: $CONFDIR"
 
+faltaInstalar=0
 inicializarValoresDefault
 existeArchivo "$RUTA_CONFIG"
-faltaInstalar=0
+
 if [ $? -eq 1 ]
 then
 	#Si no existe, iniciar instalacion
