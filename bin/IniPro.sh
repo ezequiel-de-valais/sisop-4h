@@ -258,7 +258,32 @@ function mostrarMensajeInstalacionFinalizada {
 
 }
 
-#Funcion principal
+# Setea el CONFDIR
+
+function setCONFDIR {
+
+   CONFDIR=${PWD}/conf
+   confdirInvalido=true
+   while [ "true" == "$confdirInvalido" ]
+   do
+      if [ ! -f $CONFDIR/$confFile ]; then
+	 old=$CONFDIR
+         CONFDIR=""
+         cantSeparadores=$(grep -o "/" <<< "$old" | wc -l)
+         for (( c=2; c < $cantSeparadores; c++ ))
+	 do
+   	     aux=$(echo $old | cut -d "/" -f$c)
+	     CONFDIR=$CONFDIR/$aux
+ 	 done
+         CONFDIR=$CONFDIR/conf
+      else
+	 confdirInvalido=false
+      fi
+   done
+
+}
+
+# Funcion principal
 
 function main {
 
@@ -267,8 +292,8 @@ function main {
    maestros=(emisores.mae normas.mae gestiones.mae)
    comandos=(Start.sh Stop.sh Mover.sh Glog.sh IniPro.sh RecPro.sh ProPro.sh InfPro.pl)
    tablas=(nxe.tab axg.tab)
-   CONFDIR=../conf
    confFile=InsPro.conf
+   setCONFDIR
    if [ "true" == "`env | grep INICIALIZADO | cut -d"=" -f 2`" ]
    then
       echo -e "Ambiente ya inicializado, si quiere reiniciar termine su sesión e ingrese nuevamente."
