@@ -26,6 +26,15 @@ RECHAZADOS="$GRUPO$RECHDIR/"
 # la cantidad en el directorio $NOVEDADES
 function hay_archivos() {
 	cantidad_archivos=$(ls -1 $NOVEDADES | wc -l)
+	for archivo in $(ls -1 "$NOVEDADES"); do
+		cant_lineas=$(wc -m "$NOVEDADES/$archivo")
+		cant=$(echo "$cant_lineas" | cut -d " " -f 1)
+		if [[ "$cant" = "0" ]];then
+			Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
+			Glog.sh "RecPro.sh" "$archivo archivo vacio" INFO
+			let cantidad_archivos=cantidad_archivos-1
+		fi
+	done
 }
 
 # Valida el formato de los nombres , moviendo los que no cumplen a rechazados
@@ -33,7 +42,7 @@ function validar_formato_nombre (){
 	archivos_a_rechazados=$(ls -1 $NOVEDADES | grep -v "^.*_.*_.*_.*_.*$") 
 	for archivo in $archivos_a_rechazados;do
 		Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
-		echo "Moviendo a rechazados por formato"
+		#echo "Moviendo a rechazados por formato"
 		Glog.sh "RecPro.sh" "Rechazado por formato invalido" INFO
 		#escribir log
 	done
