@@ -58,7 +58,7 @@ function mover_archivo () {
 			#Creo el directorio de duplicados
 			mkdir "$directorio/duplicados"
 		fi
-		nnn=$(ls "$directorio/duplicados" | grep "^$archivo_a_mover.[0-9]\{1,3\}" | sort -r | sed s/$archivo_a_mover/ | head -n 1)
+		nnn=$(ls "$directorio/duplicados" | grep "^$archivo_a_mover.[0-9]\{1,3\}" | sort -r | sed s/$archivo_a_mover// | sed s/\.// |  head -n 1)
 		#Si no hay duplicados
 		if [ "$nnn" == "" ]; then
 			nnn=0
