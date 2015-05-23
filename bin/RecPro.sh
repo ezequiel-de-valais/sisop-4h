@@ -31,7 +31,7 @@ function hay_archivos() {
 		cant=$(echo "$cant_lineas" | cut -d " " -f 1)
 		if [[ "$cant" = "0" ]];then
 			Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
-			Glog.sh "RecPro.sh" "$archivo archivo vacio" INFO
+			Glog.sh "RecPro" "$archivo archivo vacio" INFO
 			let cantidad_archivos=cantidad_archivos-1
 		fi
 	done
@@ -43,7 +43,7 @@ function validar_formato_nombre (){
 	for archivo in $archivos_a_rechazados;do
 		Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
 		#echo "Moviendo a rechazados por formato"
-		Glog.sh "RecPro.sh" "$archivo rechazado por formato invalido" INFO
+		Glog.sh "RecPro" "$archivo rechazado por formato invalido" INFO
 		#escribir log
 	done
 }
@@ -55,7 +55,7 @@ function validar_tipo_archivos (){
 		if [ $(file "$NOVEDADES/$archivo" | grep -c "text") = 0 ];then
 			Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
 			#Escribir log
-			Glog.sh "RecPro.sh" "$archivo no es de texto" INFO
+			Glog.sh "RecPro" "$archivo no es de texto" INFO
 		fi
 	done
 }
@@ -77,18 +77,35 @@ function validar_fecha (){
 	ai=$(echo $fechaInicial | cut -c5,6,7,8)
 
 	#Invierto el orden de las fechas para poder compararlas (año/mes/dia)
-	fechaInicial=$(date --date="$ai-$mi-$di" +"%Y%m%d")
-	fechaValidar=$(date --date="$a3-$m3-$d3" +"%Y%m%d")
+	fechaInicial=$(date --date="$ai-$mi-$di" +"%Y%m%d" 2>&-)
+	if [ "$?" = "1" ]; then
+		Glog.sh "RecPro" "fecha invalida inicial de mae $ai-$mi-$di , formato incorrecto" WAR
+		return 1;
+	fi
+
+	fechaValidar=$(date --date="$a3-$m3-$d3" +"%Y%m%d" 2>&-)
+	if [ "$?" = "1" ]; then
+		Glog.sh "RecPro" "fecha invalida en $archivo, formato incorrecto" WAR
+		return 1;
+	fi
 	#echo "fechaInicial: $fechaInicial fechaFinal:$fechaFinal fechaValidar:$fechaValidar"
 
-	if [[ "$fechaInicial" > "$fechaValidar" ]]; then
+	if [[ "$fechaInicial" -gt "$fechaValidar" ]]; then
+		Glog.sh "RecPro" "fecha invalida en $archivo, anterior a la gestion" WAR
+
 		#Antes de la fecha inicial
 		#echo "es menor"
 		return 1
 	fi
 
 	if [[ "$fechaFinal" = "NULL" ]]; then
-		return 0
+		fechaHoy=$(date  +"%Y%m%d")
+		if [[ "$fechaHoy" -gt "$fechaValidar" ]]; then
+			Glog.sh "RecPro" "nope, todo OK" INFO
+			return 0
+		fi
+		Glog.sh "RecPro" "fecha invalida en $archivo, posterior al dia de hoy" WAR
+		return 1
 	fi
 
 	
@@ -98,6 +115,8 @@ function validar_fecha (){
 	fechaFinal="$af$mf$df"
 	
 	if [[ "$fechaFinal" < "$fechaValidar" ]]; then
+		Glog.sh "RecPro" "fecha invalida en $archivo, posterior a la gestion" WAR
+
 		#Despues de la fecha final
 		#echo "es major, $fechaFinal"		
 		return 1
@@ -112,7 +131,7 @@ ciclo=0
 while true
 do
 	let ciclo=ciclo+1
-	Glog.sh "RecPro.sh" "ciclo numero : $ciclo" INFO
+	Glog.sh "RecPro" "ciclo numero : $ciclo" INFO
 	#Escribir el numero de ciclo en el LOG
 	#Validar los archivos en el directorio de novedades
 	hay_archivos
@@ -129,25 +148,25 @@ do
 			fecha=$(echo $archivo | cut -d "_" -f 5)
 			if [ $(grep -c "^$gestion;.*;.*;.*;.*$" "$GESTIONES") -eq 0 ];then
 				Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
-				Glog.sh "RecPro.sh" "$archivo rechazados gestion invalida" INFO
+				Glog.sh "RecPro" "$archivo rechazados gestion invalida" INFO
 				#Loggear	
 			elif [ $(grep -c "^$norma;.*;.*$" "$NORMAS") -eq 0 ];then
 				Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
-				Glog.sh "RecPro.sh" "$archivo rechazados cod_norma invalido" INFO
+				Glog.sh "RecPro" "$archivo rechazados cod_norma invalido" INFO
 				#Loggear
 			elif [ $(grep -c "^$emisor;.*;.*;.*$" "$EMISORES") -eq 0 ];then
 				Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
-				Glog.sh "RecPro.sh" "$archivo rechazados cod_emisor invalido" INFO
+				Glog.sh "RecPro" "$archivo rechazados cod_emisor invalido" INFO
 				#Loguear
 			else 
 				validar_fecha
 				if [ $? = 1 ];then
 					Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
-					Glog.sh "RecPro.sh" "$archivo rechazado fecha invalida" INFO
+					Glog.sh "RecPro" "$archivo rechazado fecha invalida" INFO
 				else
 					mkdir -p "$ACEPTADOS/$gestion"
 					Mover.sh "$NOVEDADES/$archivo" "$ACEPTADOS/$gestion"
-					Glog.sh "RecPro.sh" "$archivo aceptados" INFO
+					Glog.sh "RecPro" "$archivo aceptados" INFO
 				fi
 			fi
 		done
@@ -165,10 +184,10 @@ do
 					ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "RecPro.sh" | grep "ProPro.sh")
 	                                PID=$(echo $ProcesosCorriendo | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 				else
-					Glog.sh "RecPro.sh" "Invocacion de ProPro pospuesta para el siguiente ciclo" INFO
+					Glog.sh "RecPro" "Invocacion de ProPro pospuesta para el siguiente ciclo" INFO
 				
 				fi
-				Glog.sh "RecPro.sh" "ProPro corriendo bajo el no.: <$PID>" INFO
+				Glog.sh "RecPro" "ProPro corriendo bajo el no.: <$PID>" INFO
 				break
 			fi
 		done
