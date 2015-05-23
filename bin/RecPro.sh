@@ -182,7 +182,7 @@ do
 				if [ "$PID" = "" ]; then
 					Start.sh ProPro.sh
 					ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "RecPro.sh" | grep "ProPro.sh")
-	                                PID=$(echo $ProcesosCorriendo | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
+				#PID=$(echo $ProcesosCorriendo | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')   ##PARA QUE ESTA ESTO ACA
 				else
 					Glog.sh "RecPro" "Invocacion de ProPro pospuesta para el siguiente ciclo" INFO
 				
