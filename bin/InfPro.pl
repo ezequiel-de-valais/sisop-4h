@@ -459,9 +459,34 @@ sub grabarInforme{
 		
 		open(FILE, "> $ruta_siguiente") || die "Error al abrir el archivo";
 		for $puntaje( @puntajes_ordenados ) {
-			for $reg (@{ $hash_puntajes{$puntaje}}){
-				@campos = split (';', $reg);
-				print FILE "$campos[0];$campos[1];$campos[2];$campos[3];$campos[4];$campos[5];$campos[6];$campos[7];$campos[8];$campos[9]\n";
+			if ($puntaje>0){
+				for $reg (@{ $hash_puntajes{$puntaje}}){
+					@campos = split (';', $reg);
+					print FILE "$campos[0];$campos[1];$campos[2];$campos[3];$campos[4];$campos[5];$campos[6];$campos[7];$campos[8];$campos[9]\n";
+				}
+			}
+			else{
+				### ARMO HASH_CRONOLOGICO: CLAVE: añomesdia, VALOR: lista de registros
+				my %hash_cronologico;
+				my $fecha;
+				my $aaaammdd;
+				my @campos;	
+				for $reg (@{ $hash_puntajes{$puntaje}}){		
+					@campos = split (';', $reg);
+					$fecha = $campos[6];
+					$aaaammdd = substr($fecha,6).substr($fecha,3,2). substr($fecha,0,2);	
+					
+					if (exists($hash_cronologico{$aaaammdd}))   {push ($hash_cronologico{$aaaammdd}, $reg); }
+					else					{$hash_cronologico{$aaaammdd}[0] = $reg;	 }	
+				}
+				@fechas = keys %hash_cronologico;
+				@cronologico = reverse sort{$a <=> $b} @fechas;
+				for $fecha ( @cronologico ) {
+					for $reg (@{ $hash_cronologico{$fecha}}){
+						@campos = split (';', $reg);
+						print FILE "$campos[0];$campos[1];$campos[2];$campos[3];$campos[4];$campos[5];$campos[6];$campos[7];$campos[8];$campos[9]\n";
+					}
+				}
 			}	
 		}
 		close(FILE);			
@@ -550,10 +575,36 @@ sub grabarConsulta(){
 
 
 		for $puntaje( @puntajes_ordenados ) {
-			for $reg (@{ $hash_puntajes{$puntaje}}){
-				@campos = split (';', $reg);
-				$nombre_emisor = $hash_emisores{$campos[13]};
-				print FILE "$campos[12];$nombre_emisor;$campos[13];$campos[2];$campos[3];$campos[11];$campos[1];$campos[4];$campos[5];$campos[10]\n";
+			if ($puntaje>0){
+				for $reg (@{ $hash_puntajes{$puntaje}}){
+					@campos = split (';', $reg);
+					$nombre_emisor = $hash_emisores{$campos[13]};
+					print FILE "$campos[12];$nombre_emisor;$campos[13];$campos[2];$campos[3];$campos[11];$campos[1];$campos[4];$campos[5];$campos[10]\n";
+				}
+			}
+			else{
+				### ARMO HASH_CRONOLOGICO: CLAVE: añomesdia, VALOR: lista de registros
+				my %hash_cronologico;
+				my $fecha;
+				my $aaaammdd;
+				my @campos;	
+				for $reg (@{ $hash_puntajes{$puntaje}}){		
+					@campos = split (';', $reg);
+					$fecha = $campos[1];
+					$aaaammdd = substr($fecha,6).substr($fecha,3,2). substr($fecha,0,2);	
+					
+					if (exists($hash_cronologico{$aaaammdd}))   {push ($hash_cronologico{$aaaammdd}, $reg); }
+					else					{$hash_cronologico{$aaaammdd}[0] = $reg;	 }	
+				}
+				@fechas = keys %hash_cronologico;
+				@cronologico = reverse sort{$a <=> $b} @fechas;
+				for $fecha ( @cronologico ) {
+					for $reg (@{ $hash_cronologico{$fecha}}){
+						@campos = split (';', $reg);
+						$nombre_emisor = $hash_emisores{$campos[13]};
+						print FILE "$campos[12];$nombre_emisor;$campos[13];$campos[2];$campos[3];$campos[11];$campos[1];$campos[4];$campos[5];$campos[10]\n";
+					}
+				}
 			}	
 		}	
 		print("\nSu busqueda se ha almacenado en la siguiente ruta:\n");
@@ -568,40 +619,87 @@ sub grabarConsulta(){
 sub mostrarInforme{
 	@puntajes = keys %hash_puntajes;	
 	@puntajes_ordenados = reverse sort{$a <=> $b} @puntajes; 
-	
 	#Muestro el resultado de la consulta
 	if ((scalar @puntajes_ordenados) > 0){
 		print "\nLista de archivos ordenados por peso: \n\n";
 		for $puntaje( @puntajes_ordenados ) {
-			for $reg (@{ $hash_puntajes{$puntaje}}){
-				@campos = split (';', $reg);
-				print "$campos[0] $campos[1]($campos[2]) $campos[3]/$campos[4] $campos[5] $campos[6] Peso=<$puntaje>\n";
-				print "$campos[7]\n";
-				print "$campos[8]\n\n";
-			}	
+			if ($puntaje>0){
+				for $reg (@{ $hash_puntajes{$puntaje}}){
+					&mostrarInformePorSalidaSTD($reg);
+				}	
+			}
+			else{
+				### ARMO HASH_CRONOLOGICO: CLAVE: añomesdia, VALOR: lista de registros
+				my %hash_cronologico;
+				my $fecha;
+				my $aaaammdd;
+				my @campos;	
+				for $reg (@{ $hash_puntajes{$puntaje}}){		
+					@campos = split (';', $reg);
+					$fecha = $campos[6];
+					$aaaammdd = substr($fecha,6).substr($fecha,3,2). substr($fecha,0,2);	
+					
+					if (exists($hash_cronologico{$aaaammdd}))   {push ($hash_cronologico{$aaaammdd}, $reg); }
+					else					{$hash_cronologico{$aaaammdd}[0] = $reg;	 }	
+				}
+				@fechas = keys %hash_cronologico;
+				@cronologico = reverse sort{$a <=> $b} @fechas;
+				for $fecha ( @cronologico ) {
+					for $reg (@{ $hash_cronologico{$fecha}}){
+						&mostrarInformePorSalidaSTD($reg);
+					}
+				}
+			}
 		}
 	}
 	else{
 		print "\nNo se encontro ningun coincidencia\n";
 	}
 
-}	
+}
+
+sub mostrarInformePorSalidaSTD(){
+	my $reg=$_[0];
+	my @campos = split (';', $reg);
+	print "$campos[0] $campos[1]($campos[2]) $campos[3]/$campos[4] $campos[5] $campos[6] Peso=<$puntaje>\n";
+	print "$campos[7]\n";
+	print "$campos[8]\n\n";
+}		
 sub mostrarConsulta(){
 
 	@puntajes = keys %hash_puntajes;	
 	@puntajes_ordenados = reverse sort{$a <=> $b} @puntajes; 
-	
 	#Muestro el resultado de la consulta
 	if ((scalar @puntajes_ordenados) > 0){
 		print "\nLista de archivos ordenados por peso: \n\n";
 		for $puntaje( @puntajes_ordenados ) {
+			if ($puntaje > 0 ){
 				for $reg (@{ $hash_puntajes{$puntaje}}){
+					&mostrarConsultaPorSalidaSTD($reg);
+				}
+			}
+			else{
+				### ARMO HASH_CRONOLOGICO: CLAVE: añomesdia, VALOR: lista de registros
+				my %hash_cronologico;
+				my $fecha;
+				my $aaaammdd;
+				my @campos;	
+				for $reg (@{ $hash_puntajes{$puntaje}}){		
 					@campos = split (';', $reg);
-					$nombre_emisor = $hash_emisores{$campos[13]};
-					print "$campos[12] $nombre_emisor($campos[13]) $campos[2]/$campos[3] $campos[11] $campos[1] Peso=<$puntaje>\n";
-					print "$campos[4]\n";
-					print "$campos[5]\n\n";
-				}	
+					$fecha = $campos[1];
+					$aaaammdd = substr($fecha,6).substr($fecha,3,2). substr($fecha,0,2);	
+					
+					if (exists($hash_cronologico{$aaaammdd}))   {push ($hash_cronologico{$aaaammdd}, $reg); }
+					else					{$hash_cronologico{$aaaammdd}[0] = $reg;	 }	
+				}
+				@fechas = keys %hash_cronologico;
+				@cronologico = reverse sort{$a <=> $b} @fechas;
+				for $fecha ( @cronologico ) {
+					for $reg (@{ $hash_cronologico{$fecha}}){
+						&mostrarConsultaPorSalidaSTD($reg);
+					}
+				}
+			}	
 		}
 	}
 	else{
@@ -609,17 +707,31 @@ sub mostrarConsulta(){
 	}
 }
 
+sub mostrarConsultaPorSalidaSTD(){
+	my $reg=$_[0];
+	my @campos = split (';', $reg);
+	$nombre_emisor = $hash_emisores{$campos[13]};
+	print "$campos[12] $nombre_emisor($campos[13]) $campos[2]/$campos[3] $campos[11] $campos[1] Peso=<$puntaje>\n";
+	print "$campos[4]\n";
+	print "$campos[5]\n\n";
+}
 ## VOLVER A FILTRAR
 sub calcularPesos{
 	$opcion = $_[0];
 	($opcion, $palabra_clave, $filtro_cod_norma, $filtro_anios, $filtro_nro_norma, $filtro_cod_gestion, $filtro_cod_emisor, @interseccion_rutas, %hash_puntajes) = @_;
 
-	chomp($palabra_clave);  
+	chomp($palabra_clave); 
+	$nro_norma; 
 	$cod_emisor;
 	$cod_norma;
 	$cod_gestion;
 	$causante;	
 	$extracto;
+	
+	if ($palabra_clave eq ""){
+		$puntaje_min=0;
+	}
+	else {  $puntaje_min=1;   }
 
 	for $ruta (@interseccion_rutas){
 		chomp($ruta);
@@ -633,6 +745,7 @@ sub calcularPesos{
 
 			if ( ($opcion eq "i") || ($opcion eq "ig") ){
 			 	$cod_emisor = @campos[2];
+				$nro_norma = @campos[3];
 				$cod_norma = @campos[0];
 				$cod_gestion = @campos[5];
 				$causante = $campos[7];	
@@ -640,7 +753,8 @@ sub calcularPesos{
 			}
 			# opcion es "c" 0 "cg"
 			else {
-				$cod_emisor = @campos[13];	
+				$cod_emisor = @campos[13];
+				$nro_norma = @campos[2];	
 				$cod_norma = @campos[12];
 				$cod_gestion = @campos[11];
 				$causante = $campos[4];	
@@ -653,7 +767,7 @@ sub calcularPesos{
 				chomp($nro_norma_final);
 				$nro_norma_inicial =~ s/^0+//g;
 				$nro_norma_final =~ s/^0+//g;
-				if (($nro_norma_inicial > $campos[2]) || ($campos[2] > $nro_norma_final)){
+				if (($nro_norma_inicial > $nro_norma) || ($nro_norma > $nro_norma_final)){
 					next;
 				} 
 			}
@@ -678,7 +792,7 @@ sub calcularPesos{
 
 			$puntaje += cantidadDeOcurrencias($causante, $palabra_clave)*10;
 			$puntaje += cantidadDeOcurrencias($extracto, $palabra_clave)*1;
-			if ($puntaje > 0){
+			if ($puntaje >= $puntaje_min){
 				if ( exists($hash_puntajes{$puntaje}) ){
 					push ($hash_puntajes{$puntaje}, $reg);
 				}
@@ -695,16 +809,16 @@ sub calcularPesos{
 sub cantidadDeOcurrencias{
 	my $text = $_[0];
 	my $palabra_clave = $_[1];
-	my @strings = split / /, $text;
+	my @strings = split (' ', $text);
 	my $count = 0; 	
 
 	# La comparacion no es case sensitive
 	foreach my $str (@strings) {
+		
 		if (lc($str) eq lc($palabra_clave)){	
 			$count++;
 		}
 	}
-
 	return $count;
 }
 
@@ -1285,11 +1399,13 @@ sub inicializarRutas{
 			my @regs = split("=", $reg);
 			chomp(@regs);
 			if($regs[0] eq "MAEDIR"){
-				$MAEDIR = "../".$regs[1]."/";
+				$MAEDIR = $GRUPO.$regs[1]."/";
 			}elsif($regs[0] eq "INFODIR"){
-				$INFODIR = "../".$regs[1]."/";
+				$INFODIR = $GRUPO.$regs[1]."/";
 			}elsif($regs[0] eq "PROCDIR"){
-				$PROCDIR = "../".$regs[1]."/";
+				$PROCDIR = $GRUPO.$regs[1]."/";
+			}elsif($regs[0] eq "GRUPO"){
+				$GRUPO = $regs[1];
 			}
 		}
 		close(FILE);
@@ -1310,7 +1426,7 @@ sub inicializarRutas{
 
 
 #CONSTANTES
-
+$GRUPO = "";
 $INFODIR = ""; 
 $MAEDIR = "";
 $PROCDIR = "";
