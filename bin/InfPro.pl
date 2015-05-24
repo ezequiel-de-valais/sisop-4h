@@ -1,17 +1,17 @@
-#! /usr/bin/perl
+#! /usr/bin/perl -w 
 
 sub inicio{
 
 	mostrarAyuda();
 
 	my $opcion = menuPrincipal();
-	my %hash_gestiones;
-	my %hash_emisores;
+	#%hash_gestiones;
+	#%hash_emisores;
 	my @rutas;
 	#my @resultados_elegidos;
 	## Levanto a memoria los archivos de gestiones y emisores
-	cargarHashGestiones(%hash_gestiones);
-	cargarHashEmisores(%hash_emisores);
+	%hash_gestiones = &cargarHashGestiones();
+	%hash_emisores = &cargarHashEmisores();
 	## Se carga una sola vez los hashes para las consultas
 	while ($opcion ne "s"){	
 		if ($opcion eq "a"){
@@ -89,7 +89,7 @@ sub pedirResultados{
 	## Cargo en @resultados_elegidos los archivos que elijio
 	my @resultados_elegidos;
 	foreach my $opcion_elegida (@opciones_elegidas){
-		push(@resultados_elegidos, @resultados[$opcion_elegida-1]);
+		push(@resultados_elegidos, $resultados[$opcion_elegida-1]);
 	}
 	return @resultados_elegidos;
 }
@@ -98,7 +98,7 @@ sub obtenerArchivosResultado{
 
 	my @resultadoss;	
 
-	my $dir = $INFODIR;	
+	my $dir = $GRUPO.$INFODIR;	
 	my @rutas = cargarArchivos($dir);
 
 	foreach my $ruta (@rutas){
@@ -116,7 +116,7 @@ sub procesarEstadisticas{
 	$opcion = $_[0];
 #	my @anios_ordenados;
 	%hash_anio_cronologico = ();
-	@salida_estadisticas;
+	#@salida_estadisticas;
 	if ( ($opcion eq "e")|| ($entrada eq "eg") ){
 		separador();
 		print("ESTADISTICAS\n");	
@@ -181,7 +181,7 @@ sub cargarSalidaEstadistica{
 		$cant_resoluciones = 0;
 		$cant_disposiciones = 0;
 		$cant_convenios = 0;
-		$anio = @anios_ordenados[$i];
+		$anio = $anios_ordenados[$i];
 
 		## Ordeno las rutas == Ordeno por Codigo de Gestion
 		@rutas_del_anio_ordenado = sort (@{$hash_anio_cronologico{$anio}});
@@ -193,18 +193,18 @@ sub cargarSalidaEstadistica{
 		my $tam_2 = scalar @rutas_del_anio_ordenado;
 		
 		# Leo la primera ruta para empezar las comparaciones
-		$ruta = @rutas_del_anio_ordenado[$i_2];
+		$ruta = $rutas_del_anio_ordenado[$i_2];
 		open(FILE, $ruta) || die "Error al abrir el archivo";
 		$reg = <FILE>;
 		@regs = split (';', $reg);		
 		$cod_gestion_anterior = $regs[11];
-		$cod_gestion_actual;
+		#$cod_gestion_actual;
 		close (FILE);
 
 		## Recorro todas las rutas de ese año, puede pasar que para ese año haya gestiones distintas
 		while ( $i_2 < $tam_2){
 
-			$ruta = @rutas_del_anio_ordenado[$i_2];
+			$ruta = $rutas_del_anio_ordenado[$i_2];
 			open(FILE, $ruta) || die "Error al abrir el archivo";
 			$reg = <FILE>;
 			@regs = split (';', $reg);
@@ -224,15 +224,14 @@ sub cargarSalidaEstadistica{
 				my $cod_norma = $regs[12];
 				chomp($cod_norma);	
 				$cantidad_registros = 0;	
-				while($reg ne ""){
+				while($reg = <FILE>){
 					@regs = split (';', $reg);	
 					$cantidad_registros = $cantidad_registros + 1;
-					my $cod_emisor = @regs[13];
+					my $cod_emisor = $regs[13];
 					chomp($cod_emisor);
 					if( !grep( $_ eq $cod_emisor, @codigos_emisores ) ){
 						push(@codigos_emisores, $cod_emisor);
 					}
-					$reg = <FILE>;
 				}
 				close(FILE);
 				$nombres_emisores = "";
@@ -283,9 +282,7 @@ sub cargarSalidaEstadistica{
 }
 sub grabarEstadistica{
 	@rutas = ();
-	#my $dir = "/home/hernan/INFODIR";
-	#my $dir = "/home/ezequiel/SisOpTp/INFODIR";
-	my $dir = $INFODIR;
+	my $dir = $GRUPO.$INFODIR;
 	my @rutas = cargarArchivos($dir);
 
 	@rutas = reverse sort(@rutas);
@@ -313,13 +310,13 @@ sub grabarEstadistica{
 	#Grabo la consulta
 	my $i=0;
 	my $tam = scalar @salida_estadisticas;
-	$primero = 1;
+	#$primero = 1;
 
 	if ($tam > 0){	
 
 		open(FILE, "> $ruta_siguiente") || die "Error al abrir el archivo";
 		while ($i< $tam){
-			my $salida_string = @salida_estadisticas[$i];
+			my $salida_string = $salida_estadisticas[$i];
 			my ($descripcion, $anio, $nombres_emisores, $cant_resoluciones, $cant_disposiciones, $cant_convenios) = split (';', $salida_string);
 			print	FILE"Gestion: $descripcion ";
 			print	FILE"Anio: $anio ";
@@ -345,7 +342,7 @@ sub mostrarEstadistica{
 	if ($tam > 0){
 		print "\nLista de estadisticas: \n\n";
 		while ($i< $tam){
-			my $salida_string = @salida_estadisticas[$i];
+			my $salida_string = $salida_estadisticas[$i];
 			my ($descripcion, $anio, $nombres_emisores, $cant_resoluciones, $cant_disposiciones, $cant_convenios) = split (';', $salida_string);
 			print("Gestion: $descripcion ");
 			print("Anio: $anio ");
@@ -360,11 +357,9 @@ sub mostrarEstadistica{
 	@salida_estadisticas = ();
 }
 sub cargarHashGestiones{
-	%hash_gestiones = $_[0];
-	$direccion_gestiones = $MAEDIR."/"."gestiones.mae";
+	my %hash_gestiones;
+	$direccion_gestiones = $GRUPO.$MAEDIR."/"."gestiones.mae";
 	open (FILE, $direccion_gestiones) || die "Error al abrir archivo de gestiones.mae";
-	#open(FILE, "/home/hernan/MAEDIR/gestiones.mae") || die "Error al abrir archivo de gestiones.mae";
-	#open(FILE, "/home/ezequiel/SisOpTp/MAEDIR/gestiones.mae") || die "Error al abrir archivo de gestiones.mae";
 	while(my $reg = <FILE>){
 		my @regs = split(";", $reg);
 		my $cod_gestion = $regs[0];
@@ -372,14 +367,13 @@ sub cargarHashGestiones{
 		$hash_gestiones{$cod_gestion} = $descripcion;
 	}
 	close(FILE);
+	return (%hash_gestiones);
 }
 
 sub cargarHashEmisores{
-	%hash_emisores = $_[0];
-	$direccion_emisores = $MAEDIR."/"."emisores.mae";
+	my %hash_emisores;
+	$direccion_emisores = $GRUPO.$MAEDIR."/"."emisores.mae";
 	open(FILE, $direccion_emisores) || die "Error al abrir archivo de emisores.mae";
-	#open(FILE, "/home/ezequiel/SisOpTp/MAEDIR/emisores.mae") || die "Error al abrir archivo de gestiones.mae";
-	#open(FILE, "/home/hernan/MAEDIR/emisores.mae") || die "Error al abrir archivo de emisores.mae";
 	while(my $reg = <FILE>){
 		my @regs = split(";", $reg);
 		my $cod_emisor = $regs[0];
@@ -387,6 +381,7 @@ sub cargarHashEmisores{
 		$hash_emisores{$cod_emisor} = $nombre_emisor;
 	}
 	close(FILE);
+	return (%hash_emisores);
 }
 
 sub menuPrincipal{
@@ -425,9 +420,7 @@ sub procesarInforme{
 
 sub grabarInforme{
 	@rutas = ();
-	#my $dir = "/home/ezequiel/SisOpTp/INFODIR";
-	#my $dir = "/home/hernan/INFODIR";
-	my $dir = $INFODIR;
+	my $dir = $GRUPO.$INFODIR;
 	my @rutas = cargarArchivos($dir);
 
 	@rutas = reverse sort(@rutas);
@@ -559,9 +552,7 @@ sub grabarConsulta(){
 	@puntajes = keys %hash_puntajes;	
 	@puntajes_ordenados = reverse sort{$a <=> $b} @puntajes; 
 	if ((scalar @puntajes_ordenados) > 0){
-		#my $dir = "/home/ezequiel/SisOpTp/INFODIR";
-		#my $dir = "/home/hernan/INFODIR";
-		my $dir = $INFODIR;
+		my $dir = $GRUPO.$INFODIR;
 		my @rutas = cargarArchivos($dir);
 
 		@rutas = reverse sort(@rutas);
@@ -721,12 +712,12 @@ sub calcularPesos{
 	($opcion, $palabra_clave, $filtro_cod_norma, $filtro_anios, $filtro_nro_norma, $filtro_cod_gestion, $filtro_cod_emisor, @interseccion_rutas, %hash_puntajes) = @_;
 
 	chomp($palabra_clave); 
-	$nro_norma; 
-	$cod_emisor;
-	$cod_norma;
-	$cod_gestion;
-	$causante;	
-	$extracto;
+	#$nro_norma; 
+	#$cod_emisor;
+	#$cod_norma;
+	#$cod_gestion;
+	#$causante;	
+	#$extracto;
 	
 	if ($palabra_clave eq ""){
 		$puntaje_min=0;
@@ -744,19 +735,19 @@ sub calcularPesos{
 			## CHEQUEAR QUE LOS REGISTROS COINCIDEN CON LOS FILTROS	
 
 			if ( ($opcion eq "i") || ($opcion eq "ig") ){
-			 	$cod_emisor = @campos[2];
-				$nro_norma = @campos[3];
-				$cod_norma = @campos[0];
-				$cod_gestion = @campos[5];
+			 	$cod_emisor = $campos[2];
+				$nro_norma = $campos[3];
+				$cod_norma = $campos[0];
+				$cod_gestion = $campos[5];
 				$causante = $campos[7];	
 				$extracto = $campos[8];
 			}
 			# opcion es "c" 0 "cg"
 			else {
-				$cod_emisor = @campos[13];
-				$nro_norma = @campos[2];	
-				$cod_norma = @campos[12];
-				$cod_gestion = @campos[11];
+				$cod_emisor = $campos[13];
+				$nro_norma = $campos[2];	
+				$cod_norma = $campos[12];
+				$cod_gestion = $campos[11];
 				$causante = $campos[4];	
 				$extracto = $campos[5];
 			}
@@ -809,17 +800,20 @@ sub calcularPesos{
 sub cantidadDeOcurrencias{
 	my $text = $_[0];
 	my $palabra_clave = $_[1];
-	my @strings = split (' ', $text);
-	my $count = 0; 	
-
-	# La comparacion no es case sensitive
-	foreach my $str (@strings) {
-		
-		if (lc($str) eq lc($palabra_clave)){	
-			$count++;
-		}
+	#my @strings = split (' ', $text);
+	#my $count = 0; 	
+	if ( $palabra_clave ne "" ){
+		$count= () = $text =~ /$palabra_clave/g;
+		return $count;
 	}
-	return $count;
+	# La comparacion no es case sensitive
+	#foreach my $str (@strings) {
+		
+#		if (lc($str) eq lc($palabra_clave)){	
+#			$count++;
+#		}
+#	}
+	return 0;
 }
 
 sub candidatosPorCodigoEmisor(){
@@ -988,6 +982,7 @@ sub ingresarPalabraClave{
 	$palabra_clave = <STDIN>;
 	return $palabra_clave;
 }
+
 sub ingresarFiltroPorCodNorma{
 	print "Ingrese filtro por codigo de norma (CON): ";
 	$cod_norma = <STDIN>;
@@ -1115,9 +1110,7 @@ sub cargarHashesParaInforme{
 	my @resultados_elegidos = @_;
 	my $tam_resultados_elegidos = scalar @resultados_elegidos;
 
-	#my $dir = "/home/ezequiel/SisOpTp/INFODIR";
-	my $dir = $INFODIR;
-	#my $dir = "/home/hernan/INFODIR";
+	my $dir = $GRUPO.$INFODIR;
 
 	my @rutas_infodir = cargarArchivos($dir);
 	my $tam_rutas_infodir = scalar @rutas_infodir;
@@ -1177,15 +1170,13 @@ sub armarHashesParaInforme{
 }
 
 sub cargarHashesParaConsulta{
-	#my $dir = "/home/ezequiel/SisOpTp/PROCDIR";
-	my $dir = $PROCDIR;
-	#my $dir = "/home/hernan/PROCDIR";
+	my $dir = $GRUPO.$PROCDIR;
 
 	my @rutas = cargarArchivosDirDires($dir);
 	$separador = ';';
 	my @regs;
 	my $esPrimero;
-	$cod_gestion_aux;
+	#$cod_gestion_aux;
 	%hash_cod_norma = ();
 	%hash_anio = ();
 	%hash_nro_norma = ();
@@ -1202,10 +1193,10 @@ sub cargarHashesParaConsulta{
 		crearHashAnio($anio, $ruta);
 
 		open (FILE, "$ruta") or die "Falla al abrir ";
-		$reg = <FILE>;
+		
 		$esPrimero = 0;
 
-		while($reg ne ""){ 
+		while($reg = <FILE>){ 
 			@regs = split($separador, $reg);		
 			$i = 1;
 			foreach $campo (@regs){	
@@ -1218,11 +1209,11 @@ sub cargarHashesParaConsulta{
 				$i++;
 			}
 			if (!$esPrimero){	
-				$cod_gestion_aux = @regs[11];	
+				$cod_gestion_aux = $regs[11];	
 				$esPrimero = 1;
 			}
 
-			$reg = <FILE>;
+			#$reg = <FILE>;
 		}
 		
 		crearHashCodGestion($cod_gestion_aux, $ruta);
@@ -1238,9 +1229,9 @@ sub cargarArchivosDirDires{
 
 	while (my $nombre_directorio_hijo = readdir(DP)) {
 		if ( ($nombre_directorio_hijo ne ".") && ($nombre_directorio_hijo ne "..")  && ($nombre_directorio_hijo ne "proc") ){
-			$nombre_directorio_hijo = $directorio_padre.$nombre_directorio_hijo."/";
+			$nombre_directorio_hijo = $directorio_padre."/".$nombre_directorio_hijo."/";
 			if(-e $nombre_directorio_hijo){    
-				opendir(DH, $nombre_directorio_hijo) || die "No puede abrirse el directorio $directorio_hijo";
+				opendir(DH, $nombre_directorio_hijo) || die "No puede abrirse el directorio $nombre_directorio_hijo";
 				while (my $archivo = readdir(DH)) {
 					if ( ($archivo ne ".") && ($archivo ne "..") ){
 						$archivo = $nombre_directorio_hijo.$archivo."\n";
@@ -1262,7 +1253,7 @@ sub cargarArchivos{
 	
 	while (my $archivo = readdir(D)) {
 		if ( ($archivo ne ".") && ($archivo ne "..") ){
-			$archivo = $directorio.$archivo."\n";
+			$archivo = $directorio."/".$archivo."\n";
 			push(@rutas,$archivo);
 		}
 	}
@@ -1349,69 +1340,31 @@ sub mostrarAyuda{
 	#exit 0;
 }
 
-sub guardarPID{
-	if (-e 'PidFile') {	
-		open(FILE,'>>'.'PidFile') or die "Falla al abrir PidFile";
-		print FILE $$."\n";		
-		close(FILE);
-	}else{
-		print "Archivo de PID inexistente";
-	}
+# Valida que el ambiente se haya inicializado con el IniPro.sh
+
+sub esAmbienteValido{
+
+   if ( ! defined $GRUPO || $GRUPO eq "" || ! defined $PROCDIR || $PROCDIR eq "" || ! defined $MAEDIR || $MAEDIR eq "" || ! defined $INFODIR || $INFODIR eq "" || ! defined $INICIALIZADO || $INICIALIZADO ne "true")
+   {
+      print "Ambiente no inicializado. Ejecute el comando . IniPro.sh\n";
+      return 0;
+   }
+   return 1;
+
 }
 
-sub recuperarPID{
-	if (!-e 'PidFile') {	
-		open(FILE,'>'.'PidFile') or die "Falla al crear PidFile";
-		close(FILE);
-		return 0;
-	}
-	if(-z 'PidFile'){
-		return 0;
-	}	
-	if (-e 'PidFile') {
-		open(FILE,'PidFile') or die "Falla al abrir PidFile";
-		my @lines = <FILE>;
-		close(FILE);
-		@lines = reverse(@lines);
-		return $lines[0];
-	}
-}
+# Valida que no esté corriendo alguna instancia de InfPro
 
-sub estaCorriendo{
-	$pid = recuperarPID();
-	if($pid){
-		$exists = kill 0, $pid;
-		if($exists){
-			return 1;
-		}else{
-			return 0;
-		}
-	}else{
-		return 0;
-	}
-}
+sub estaInfProCorriendo{
 
-#TOMO LAS RUTA DEL CONFIG
-sub inicializarRutas{
-	if (-e "../conf/InsPro.conf") {	
-		open (FILE, "../conf/InsPro.conf") or die print "Error al abrir InsPro.conf\n";
-		while ($reg = <FILE>){
-			my @regs = split("=", $reg);
-			chomp(@regs);
-			if($regs[0] eq "MAEDIR"){
-				$MAEDIR = $GRUPO.$regs[1]."/";
-			}elsif($regs[0] eq "INFODIR"){
-				$INFODIR = $GRUPO.$regs[1]."/";
-			}elsif($regs[0] eq "PROCDIR"){
-				$PROCDIR = $GRUPO.$regs[1]."/";
-			}elsif($regs[0] eq "GRUPO"){
-				$GRUPO = $regs[1];
-			}
-		}
-		close(FILE);
-	}else{
-		print "Inicializacion del ambiente no fue realizada.\n"
-	}
+   my $InfProPIDCant=`ps ax | grep -v "grep" | grep -v "gedit" | grep -o "InfPro.pl" | sed 's-\(^ *\)\([0-9]*\)\(.*\$\)-\2-g' | wc -l`;
+   if ($InfProPIDCant > 1)
+   {
+      print "Ya se está ejecutando el programa InfPro. Por favor, espere a que el mismo termine.\n";
+      return 0;
+   }
+   return 1;
+
 }
 
 ######################
@@ -1426,22 +1379,19 @@ sub inicializarRutas{
 
 
 #CONSTANTES
-$GRUPO = "";
-$INFODIR = ""; 
-$MAEDIR = "";
-$PROCDIR = "";
 
-# primero inicializo las rutas necesarios para el procesamiento
-&inicializarRutas();
+$PROCDIR = $ENV{'PROCDIR'};
+$MAEDIR = $ENV{'MAEDIR'};
+$INFODIR = $ENV{'INFODIR'};
+$GRUPO = $ENV{'GRUPO'};
+$INICIALIZADO = $ENV{'INICIALIZADO'};
+
 # NO DEBE EJECUTARSE SI LA INICIALIZACION DE AMBIENTE NO FUE INICIALIZADA
-if ( ($INFODIR ne "") && ($MAEDIR ne "") && ($PROCDIR ne "") ){
+if ( &esAmbienteValido() ){
 	#VERIFICAR SI EL PROCESO DE INFPRO ESTA CORRIENDO
-	if(&estaCorriendo()){
+	if( ! &estaInfProCorriendo() ){
 		#SI TIENE EL MISMO PID ENTONCES CIERRO EL PROCESO
-		print "InfPro.pl ya esta corriendo.\n";	
 		exit;
-	}else{
-		&guardarPID();
 	}
 
 	my %hash_cod_norma;
@@ -1452,7 +1402,4 @@ if ( ($INFODIR ne "") && ($MAEDIR ne "") && ($PROCDIR ne "") ){
 	my %hash_puntajes;
 
 	&inicio();
-}
-else{
-	print "Inicializacion del ambiente no fue realizada.\n";
 }
