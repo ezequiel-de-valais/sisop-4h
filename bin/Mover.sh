@@ -16,7 +16,8 @@ comando="$3"
 cantidad_parametros="$#"
 dir_archivo="${archivo%/*}"
 archivo_a_mover="${1##*/}"
-
+SAVEIFS=$IFS
+SEPARADOR="\n\b"
 function verificar_parametros() {
 	if [ $cantidad_parametros -gt 3 ] || [ $cantidad_parametros -lt 2 ]; then
 		# Llamar al logging de ezequiel
@@ -27,14 +28,14 @@ function verificar_parametros() {
 
 function verificar_directorios() {
 	#Verifica existencia del archivo de entrada
-	if [ ! -f $archivo ]; then
+	if [ ! -f "$archivo" ]; then
 		#Llamar al logging
 		Glog.sh "Mover" "El archivo no existe" WAR
 		exit 2	
 	fi
 	
 	#Verifica existencia del directorio de destino
-	if [ ! -d $directorio ]; then
+	if [ ! -d "$directorio" ]; then
 		#Llamar al logging
 		Glog.sh "Mover" "El directorio no existe" WAR
 		exit 2
@@ -58,7 +59,10 @@ function mover_archivo () {
 			#Creo el directorio de duplicados
 			mkdir "$directorio/duplicados"
 		fi
-		nnn=$(ls "$directorio/duplicados" | grep "^$archivo_a_mover.[0-9]\{1,3\}" | sort -r | sed s/$archivo_a_mover// | sed s/\.// |  head -n 1)
+		IFS=$(echo -en $SEPARADOR)
+		nnn=$(ls -1 "$directorio/duplicados" | grep "^$archivo_a_mover.[0-9]\{1,3\}" | sort -r | sed s/$archivo_a_mover// | sed s/\.// |  head -n 1)
+		IFS=$SAVEIFS
+
 		#Si no hay duplicados
 		if [ "$nnn" == "" ]; then
 			nnn=0

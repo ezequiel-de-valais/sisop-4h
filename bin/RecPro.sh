@@ -16,6 +16,9 @@ GESTIONES="$GRUPO$MAEDIR/gestiones.mae"
 ACEPTADOS="$GRUPO$ACEPDIR/"
 RECHAZADOS="$GRUPO$RECHDIR/"
 
+
+SAVEIFS=$IFS
+SEPARADOR="\n\b"
 #TODO:Rechazar los archivos inválidos
 #• Si el archivo viene vacio, rechazarlo
 #• Si el archivo no es un archivo común, de texto (si es una imagen, un comprimido, etc),
@@ -25,15 +28,20 @@ RECHAZADOS="$GRUPO$RECHDIR/"
 # Devuelve en la variable cantidad_archivos
 # la cantidad en el directorio $NOVEDADES
 function hay_archivos() {
+	IFS=$(echo -en $SEPARADOR)
 	cantidad_archivos=$(ls -1 $NOVEDADES | wc -l)
 	for archivo in $(ls -1 "$NOVEDADES"); do
-		cant_lineas=$(wc -m "$NOVEDADES/$archivo")
-		cant=$(echo "$cant_lineas" | cut -d " " -f 1)
+		IFS=$SAVEIFS
+		#TODO: ACA LA ESTAMOS CAGANDO CON LOS ESPACIOS ENA ARCHIVOS
+		
+		cant_lineas=$(wc -m "$NOVEDADES$archivo")
 		if [[ "$cant" = "0" ]];then
-			Mover.sh "$NOVEDADES/$archivo" "$RECHAZADOS"
-			Glog.sh "RecPro" "$archivo archivo vacio" INFO
+			Glog.sh "RecPro" "archivo vacio $archivo" WAR
+			Mover.sh "$NOVEDADES$archivo" "$RECHAZADOS"
 			let cantidad_archivos=cantidad_archivos-1
 		fi
+		
+		IFS=$(echo -en "$SEPARADOR")
 	done
 }
 
@@ -101,7 +109,6 @@ function validar_fecha (){
 	if [[ "$fechaFinal" = "NULL" ]]; then
 		fechaHoy=$(date  +"%Y%m%d")
 		if [[ "$fechaHoy" -gt "$fechaValidar" ]]; then
-			Glog.sh "RecPro" "nope, todo OK" INFO
 			return 0
 		fi
 		Glog.sh "RecPro" "fecha invalida en $archivo, posterior al dia de hoy" WAR
@@ -140,8 +147,12 @@ do
 		validar_tipo_archivos
 		validar_formato_nombre
 		#Validaciones de cada campo
+
+		IFS=$(echo -en $SEPARADOR)
 		listaArchivos=$(ls -1 $NOVEDADES)
 		for archivo in $listaArchivos ; do
+			IFS=$SAVEIFS
+
 			gestion=$(echo $archivo | cut -d "_" -f 1)
 			norma=$(echo $archivo | cut -d "_" -f 2)
 			emisor=$(echo $archivo | cut -d "_" -f 3)
@@ -169,6 +180,8 @@ do
 					Glog.sh "RecPro" "$archivo aceptados" INFO
 				fi
 			fi
+
+		IFS=$(echo -en $SEPARADOR)
 		done
 
 	else 
@@ -178,7 +191,7 @@ do
 			cantidad=$(ls -1 "$ACEPTADOS/$subdirectorio"| wc -l)
 			if [ $cantidad -gt 0 ];then
 				ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "RecPro.sh" | grep "ProPro.sh")
-				PID=$(echo $ProcesosCorriendo | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
+				PID=$(echo "$ProcesosCorriendo" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 				if [ "$PID" = "" ]; then
 					Start.sh ProPro.sh
 					ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "RecPro.sh" | grep "ProPro.sh")
