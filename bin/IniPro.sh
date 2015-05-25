@@ -48,7 +48,9 @@ function chequearVariables {
 
 function setVariablesDeConfiguracion {
     
-    export $1=`grep "$1" "$CONFDIR/$confFile" | cut -d"=" -f 2`
+    value=$(grep "$1" "$CONFDIR/$confFile" | cut -d"=" -f 2)
+    export $1="$value"
+    echo -e "$value"
 }
 
 # Chequea que existan los scripts en la carpeta BINDIR, 
@@ -59,13 +61,13 @@ function chequearComandos {
 
  for i in ${comandos[*]}
    do
-     if [ -f $GRUPO$BINDIR/$i ]; then
+     if [ -f "$GRUPO$BINDIR/$i" ]; then
           #echo -e "El comando $i existe"
  
-          if ! [ -x $GRUPO$BINDIR/$i ]; then 
+          if ! [ -x "$GRUPO$BINDIR/$i" ]; then 
             #echo -e "y tiene permisos de ejecucion"
           #else 
-            chmod 777 $GRUPO$BINDIR/$i
+            chmod 777 "$GRUPO$BINDIR/$i"
             #echo -e "`ls -l $BINDIR/$i`"
           fi
          
@@ -85,13 +87,13 @@ function chequearMaestros {
 
  for i in ${maestros[*]}
    do
-     if [ -f $GRUPO$MAEDIR/$i ]; then
+     if [ -f "$GRUPO$MAEDIR/$i" ]; then
           #echo -e "El archivo maestro $i existe"
  
-          if ! ([ -r $GRUPO$MAEDIR/$i ] && ! [ -w $GRUPO$MAEDIR/$i ]) ; then
+          if ! ([ -r "$GRUPO$MAEDIR/$i" ] && ! [ -w "$GRUPO$MAEDIR/$i" ]) ; then
             #echo -e "y tiene permisos de lectura, pero no escritura"
           #else 
-            chmod 444 $GRUPO$MAEDIR/$i
+            chmod 444 "$GRUPO$MAEDIR/$i"
             #echo -e `ls -l $MAEDIR/$i`
           fi
          
@@ -111,13 +113,13 @@ function chequearTablas {
 
  for i in ${tablas[*]}
    do
-     if [ -f $GRUPO$MAEDIR/tab/$i ]; then
+     if [ -f "$GRUPO$MAEDIR/tab/$i" ]; then
           #echo -e "La tabla $i existe"
  
-          if ! ([ -r $GRUPO$MAEDIR/tab/$i ] && ! [ -w $GRUPO$MAEDIR/tab/$i ]); then 
+          if ! ([ -r "$GRUPO$MAEDIR/tab/$i" ] && ! [ -w "$GRUPO$MAEDIR/tab/$i" ]); then 
             #echo -e "y tiene permisos de lectura, pero no escritura"
           #else 
-            chmod 444 $GRUPO$MAEDIR/tab/$i
+            chmod 444 "$GRUPO$MAEDIR/tab/$i"
             #echo -e `ls -l $MAEDIR/tab/$i`
           fi
          
@@ -135,13 +137,13 @@ function chequearTablas {
 
 function chequearPaths {
    
-   ejec=`echo $PATH | grep $GRUPO$BINDIR`
+   ejec=`echo "$PATH" | grep "$GRUPO$BINDIR"`
 
   if [ -z "$ejec" ]; then
 
     #echo -e "No esta el path de ejecutables, agregando..."
     
-    export PATH=$PATH:$GRUPO$BINDIR
+    export PATH="$PATH:$GRUPO$BINDIR"
     
     #echo -e "Agregado\n"
 
@@ -157,7 +159,7 @@ function chequearPaths {
 
 function chequearRecPro {
 
- resultado=`ps ax | grep -v $$ | grep -v "grep" | grep "RecPro.sh"`
+ resultado=`ps ax | grep -v $$ | grep -v "grep" | grep -v "gedit" | grep "RecPro.sh"`
 
  if [ -z "$resultado" ]; then
    return 0
@@ -173,9 +175,9 @@ function lanzarRecPro {
   echo "“Desea efectuar la activación de RecPro?” Si – No"
   read resp
 
-  while [ "$resp" != "Si" ]
+  while [ "${resp,,}" != "si" -a "${resp,,}" != "s" ]
    do
-     if [ "$resp" == "No" ]; then
+     if [ "${resp,,}" == "no" -o "${resp,,}" == "n" ]; then
        return 1
      fi
 
@@ -190,11 +192,11 @@ function lanzarRecPro {
 
 function mostrarMensajeInstalacionFinalizada {
 
-	CONFDIR=${GRUPO}conf
-	dirconf=`ls $CONFDIR | tr "\n" " "`
-	dirbin=`ls $GRUPO$BINDIR | tr "\n" " "`
-	dirmae=`ls -R $GRUPO$MAEDIR | tr "\n" " "`
-	dirlog=`ls $GRUPO$LOGDIR | tr "\n" " "`
+	#CONFDIR="${GRUPO}conf"
+	dirconf=`ls "$CONFDIR" | tr "\n" " "`
+	dirbin=`ls "$GRUPO$BINDIR" | tr "\n" " "`
+	dirmae=`ls -R "$GRUPO$MAEDIR" | tr "\n" " "`
+	dirlog=`ls "$GRUPO$LOGDIR" | tr "\n" " "`
 
         mensaje="Directorio de Configuración: $CONFDIR"
   	grabarLog "$mensaje" "INF"
@@ -262,25 +264,25 @@ function mostrarMensajeInstalacionFinalizada {
 
 function setCONFDIR {
 
-   CONFDIR=${PWD}/conf
+   CONFDIR="${PWD}/conf"
    confdirInvalido=true
    while [ "true" == "$confdirInvalido" ]
    do
-      if [ ! -f $CONFDIR/$confFile ]; then
-	 old=$CONFDIR
+      if [ ! -f "$CONFDIR/$confFile" ]; then
+	 old="$CONFDIR"
          CONFDIR=""
          cantSeparadores=$(grep -o "/" <<< "$old" | wc -l)
          for (( c=2; c < $cantSeparadores; c++ ))
 	 do
-   	     aux=$(echo $old | cut -d "/" -f$c)
-	     CONFDIR=$CONFDIR/$aux
+   	     aux=$(echo "$old" | cut -d "/" -f$c)
+	     CONFDIR="$CONFDIR/$aux"
  	 done
-         CONFDIR=$CONFDIR/conf
+         CONFDIR="$CONFDIR/conf"
       else
 	 confdirInvalido=false
       fi
    done
-
+   export CONFDIR="$CONFDIR"
 }
 
 # Funcion principal
@@ -319,23 +321,23 @@ function main {
 	      Start.sh "RecPro.sh"
 	      msj="-Usted ha elegido arrancar RecPro, para frenarlo manualmente debe hacerlo de la siguiente manera: Uso: Stop.sh RecPro.sh"
 	      echo -e $msj
-	      procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
+	      procssid=$(ps -ax | grep -v $$ | grep -v "grep" | grep -v "gedit" | grep "RecPro.sh" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 	      echo -e "proc: $procssid"
 	      grabarLog "proc: $procssid" "INF"
 	   else
 	      msj="-RecPro ya iniciado, para frenarlo manualmente debe hacerlo de la siguiente manera: Uso: Stop.sh RecPro.sh"
 	      echo -e $msj
 	      grabarLog "RecPro ya iniciado" "ERR"
-	      procssid=$(ps ax | grep -v $$ | grep -v "grep" | grep "RecPro" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
+	      procssid=$(ps -ax | grep -v $$ | grep -v "grep" | grep -v "gedit" | grep "RecPro.sh" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 	      echo -e "proc: $procssid"
 	      grabarLog "RecPro.sh proc: $procssid" "ERR"
 	   fi
          fi	 
-	 export INICIALIZADO=true
+	 export INICIALIZADO="true"
       else
          msj="Error en la inicialización del ambiente. Revise el log para mayor información."
 	 echo -e $msj
-	 export INICIALIZADO=false
+	 export INICIALIZADO="false"
       fi
    fi
 

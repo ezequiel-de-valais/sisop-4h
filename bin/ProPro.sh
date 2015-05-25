@@ -30,7 +30,7 @@ function validarEjecucionIniPro {
       if [ -z "$var" ]; then
          return 0
       fi
-  done  
+  done
   return 1
 }
 
@@ -286,7 +286,7 @@ function procesarArchivo {
 		fi
            fi
         fi
-   done < $GRUPO$ACEPDIR/$gestion/$1
+   done < "$GRUPO$ACEPDIR/$gestion/$1"
 
 }
 
@@ -348,7 +348,6 @@ function calcularNroNorma {
 # Funcion principal
 
 function main {
-   
    validarEjecucionIniPro
    validacion=$?
    if [ $validacion -eq 0 ]; then 
@@ -356,14 +355,14 @@ function main {
       grabarLog "No se ejecutará el programa ProPro." "ERR"
    else
       grabarLog "Inicio de ProPro." "INF"
-      cantidadArchivos=`find $GRUPO$ACEPDIR -type f | wc -l`
+      cantidadArchivos=`find "$GRUPO$ACEPDIR" -type f | wc -l`
       grabarLog "Cantidad de archivos a procesar: $cantidadArchivos" "INF"
       MAESTROGESTIONES="$GRUPO$MAEDIR/gestiones.mae"
       gestiones=""
       while read line || [[ -n "$line" ]]; do 
           gestiones+=$(echo $line | cut -d ";" -f1) 
           gestiones+=" "
-      done < $MAESTROGESTIONES
+      done < "$MAESTROGESTIONES"
       axgfile="$GRUPO$MAEDIR/tab/axg.tab"
       declare -A nrosNorma
       declare -A datosNrosNorma
@@ -381,16 +380,21 @@ function main {
           nro=$(echo "$line" | cut -d ";" -f6)
 	  nrosNorma["$clave"]="$nro"
 	  datosNrosNorma["$clave"]="$datos"
-      done < $axgfile
+      done < "$axgfile"
       contadoresModificados=false
       cantidadArchivosProcesados=0
       cantidadArchivosRechazados=0
       for gestion in ${gestiones[*]}; do
-          if [ `ls $GRUPO$ACEPDIR | grep -xc $gestion` != 0 ]; then
-             if [ `ls $GRUPO$ACEPDIR/$gestion | cut -d"_" -f1 | grep -c $gestion` != 0 ]; then #Hay al menos un arch de la gestion
-    		fechasordenadas=$(ls $GRUPO$ACEPDIR/$gestion | cut -d"_" -f5 | sort -k1.7 -k1.4 -k1.1)
+          if [ $(ls -R "$GRUPO$ACEPDIR" | grep -xc $gestion) != 0 ]; then
+             if [ $(ls -R "$GRUPO$ACEPDIR/$gestion" | cut -d"_" -f1 | grep -c $gestion) != 0 ]; then #Hay al menos un arch de la gestion
+		for archivo in $(ls "$GRUPO$ACEPDIR/$gestion/$DUPDIR"); do
+   			grabarLog "Se rechaza el archivo $archivo por estar DUPLICADO." "WAR"
+    			Mover.sh "$GRUPO$ACEPDIR/$gestion/$DUPDIR/$archivo" "$GRUPO$RECHDIR" "ProPro"
+			(( cantidadArchivosRechazados++ ))
+		done
+    		fechasordenadas=$(ls "$GRUPO$ACEPDIR/$gestion" | grep "^.*_.*_.*_.*_.*$" | cut -d"_" -f5 | sort -k1.7 -k1.4 -k1.1)
    		for fecha in $fechasordenadas; do
-        		for archivo in `ls $GRUPO$ACEPDIR/$gestion | grep $fecha`; do
+        		for archivo in $(ls "$GRUPO$ACEPDIR/$gestion" | grep "^.*_.*_.*_.*_.*$" | grep $fecha); do
                   		grabarLog "Archivo a procesar: $archivo" "INF"
                   		verificarDuplicado "$archivo" "$GRUPO$PROCDIR/proc"
                   		if [ $? == 0 ]; then   #Si esta duplicado
@@ -398,9 +402,9 @@ function main {
                     			Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$RECHDIR" "ProPro"
 					(( cantidadArchivosRechazados++ ))
                  		 else
-                      			norma=$(echo $archivo | cut -d "_" -f 2)
-                      			emisor=$(echo $archivo | cut -d "_" -f 3)
-                      			verificarNormaEmisor $norma $emisor
+                      			norma=$(echo "$archivo" | cut -d "_" -f 2)
+                      			emisor=$(echo "$archivo" | cut -d "_" -f 3)
+                      			verificarNormaEmisor "$norma" "$emisor"
                       			if [ $? == 0 ]; then   #La combinacion COD_NORMA/COD_EMISOR no se encuentra en la tabla nxe.tab
                         		    grabarLog "Se rechaza el archivo. Emisor no habilitado en este tipo de norma." "WAR"
                         		    Mover.sh "$GRUPO$ACEPDIR/$gestion/$archivo" "$GRUPO$RECHDIR" "ProPro"
@@ -418,13 +422,13 @@ function main {
           fi
       done
       if [ true = $contadoresModificados ]; then
-	 chmod 666 $GRUPO$MAEDIR/tab/axg.tab
-	 grabarLog "Tabla de contadores preservada antes de su modificación en MAEDIR/tab/ant" "INF"
+	 chmod 666 "$GRUPO$MAEDIR/tab/axg.tab"
+	 grabarLog "Tabla de contadores preservada antes de su modificación en $GRUPO$MAEDIR/tab/ant" "INF"
          mkdir -p "$GRUPO$MAEDIR/tab/ant/"
 	 Mover.sh "$GRUPO$MAEDIR/tab/axg.tab" "$GRUPO$MAEDIR/tab/ant" "ProPro"
 	 guardarNuevaTablaAXG
-	 chmod 444 $GRUPO$MAEDIR/tab/ant/axg.tab
-	 chmod 444 $GRUPO$MAEDIR/tab/axg.tab
+	 chmod 444 "$GRUPO$MAEDIR/tab/ant/axg.tab"
+	 chmod 444 "$GRUPO$MAEDIR/tab/axg.tab"
       fi
       grabarLog "Cantidad de archivos a procesar: $cantidadArchivos" "INF"
       grabarLog "Cantidad de archivos procesados: $cantidadArchivosProcesados" "INF"

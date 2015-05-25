@@ -30,21 +30,21 @@ function verificar_directorios() {
 	#Verifica existencia del archivo de entrada
 	if [ ! -f "$archivo" ]; then
 		#Llamar al logging
-		Glog.sh "Mover" "El archivo no existe" WAR
+		Glog.sh "Mover" "El archivo $archivo no existe" WAR
 		exit 2	
 	fi
 	
 	#Verifica existencia del directorio de destino
 	if [ ! -d "$directorio" ]; then
 		#Llamar al logging
-		Glog.sh "Mover" "El directorio no existe" WAR
+		Glog.sh "Mover" "El directorio $directorio no existe" WAR
 		exit 2
 	fi
 	
 }
 
 function son_iguales() {
-	if [ $dir_archivo == $directorio ]; then
+	if [ "$dir_archivo" == "$directorio" ]; then
 		#Llamar al logging 
 		Glog.sh "Mover" "Ya esta en este directorio" WAR
 		exit 3
@@ -55,12 +55,12 @@ function son_iguales() {
 function mover_archivo () {
 	#Veo si el archivo ya existe en el directorio de destino
 	if [ -f "$directorio/$archivo_a_mover" ]; then
-		if [ ! -d "$directorio/duplicados" ]; then
+		if [ ! -d "$directorio/$DUPDIR" ]; then
 			#Creo el directorio de duplicados
-			mkdir "$directorio/duplicados"
+			mkdir "$directorio/$DUPDIR"
 		fi
 		IFS=$(echo -en $SEPARADOR)
-		nnn=$(ls -1 "$directorio/duplicados" | grep "^$archivo_a_mover.[0-9]\{1,3\}" | sort -r | sed s/$archivo_a_mover// | sed s/\.// |  head -n 1)
+		nnn=$(ls -1 "$directorio/$DUPDIR" | grep "^$archivo_a_mover.[0-9]\{1,3\}" | sort -r | sed s/"$archivo_a_mover"// | sed s/\.// |  head -n 1)
 		IFS=$SAVEIFS
 
 		#Si no hay duplicados
@@ -69,9 +69,9 @@ function mover_archivo () {
 		fi
 
 		nnn=$( echo $nnn + 1 | bc -l )
-		mv "$archivo" "$directorio/duplicados/$archivo_a_mover.$nnn"
+		mv "$archivo" "$directorio/$DUPDIR/$archivo_a_mover.$nnn"
 		#Llamar al logging
-		Glog.sh "Mover" "Se movio a duplicados" INFO
+		Glog.sh "Mover" "Se movio a $directorio/$DUPDIR" INFO
 		exit 0
 	else 
 		mv "$archivo" "$directorio"
@@ -84,9 +84,8 @@ function mover_archivo () {
 
 
 # Mover 
-
+IFS=''
 verificar_parametros
 verificar_directorios
 son_iguales
 mover_archivo
-

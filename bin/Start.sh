@@ -13,15 +13,14 @@ Proceso=$1
 # para verificar que no esta corriendo
 # Obtengo procesos con ps ax , uso grep para quedarme con los que no son $$ (este proceso),
 # que no sean grep , que no sea Start.sh y que matchee cn el nombre del proceso
-ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "Start.sh" | grep $Proceso)
+ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "gedit" | grep -v "Start.sh" | grep $Proceso)
 # Del filtro anterior , me quedo con la primer linea , y de la primer linea saco los primeros 4 bytes 
 PIDproceso=$(echo $ProcesosCorriendo | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 if [ "$PIDproceso" == "" ]; then
 	# Inicio el proceso
 	bash $Proceso &
-	Glog.sh "Start" "Inicio de Demonio" INFO
+	Glog.sh "Start" "Inicio de proceso $Proceso" INFO
 else
-	Glog.sh "Start" "Demonio ya iniciado" WAR
+	Glog.sh "Start" "Proceso $Proceso ya iniciado" WAR
 fi
-
  

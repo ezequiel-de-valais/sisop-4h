@@ -188,14 +188,14 @@ do
 		#Ir a directorio de ACEPTADOS
 		#Invocar a ProPro
 		for subdirectorio in $(ls -1 "$ACEPTADOS");do
-			cantidad=$(ls -1 "$ACEPTADOS/$subdirectorio"| wc -l)
+			cantidad=$(find "$ACEPTADOS/$subdirectorio" -type f | wc -l)
 			if [ $cantidad -gt 0 ];then
-				ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "RecPro.sh" | grep "ProPro.sh")
+				ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "gedit" | grep "ProPro.sh")
 				PID=$(echo "$ProcesosCorriendo" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 				if [ "$PID" = "" ]; then
 					Start.sh ProPro.sh
-					ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "RecPro.sh" | grep "ProPro.sh")
-				#PID=$(echo $ProcesosCorriendo | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')   ##PARA QUE ESTA ESTO ACA
+					ProcesosCorriendo=$(ps ax | grep -v $$ | grep -v "grep" | grep -v "gedit" | grep "ProPro.sh")
+					PID=$(echo "$ProcesosCorriendo" | sed 's-\(^ *\)\([0-9]*\)\(.*$\)-\2-g')
 				else
 					Glog.sh "RecPro" "Invocacion de ProPro pospuesta para el siguiente ciclo" INFO
 				
@@ -209,4 +209,3 @@ do
 
 	sleep $intervalo
 done
-

@@ -365,7 +365,7 @@ procesarTodo(){
 	procesarDirectorio "RECHDIR" "$RECHDIR_DEFAULT" "Defina el directorio de grabacion de archivos rechazados (/$RECHDIR_DEFAULT):"
 	procesarDirectorio "PROCDIR" "$PROCDIR_DEFAULT" "Defina el directorio de grabación de los documentos protocolizados (/$PROCDIR_DEFAULT):"
 	procesarDirectorio "INFODIR" "$INFODIR_DEFAULT" "Defina el directorio de grabación de los informes de salida (/$INFODIR_DEFAULT):"
-	procesarDirectorio "DUPDIR" "$DUPDIR_DEFAULT" "Defina el directorio de grabación de los informes de salida (/$DUPDIR_DEFAULT):"
+	procesarDirectorio "DUPDIR" "$DUPDIR_DEFAULT" "Defina el directorio de grabación del repositorio de duplicados (/$DUPDIR_DEFAULT):"
 	procesarDirectorio "LOGDIR" "$LOGDIR_DEFAULT" "Defina el directorio de logs (/$LOGDIR_DEFAULT):"
 	procesarTamanoLog  
 }
@@ -610,47 +610,47 @@ obtenerValorVector(){
 }
 
 chequearInstalacion(){
-	if [ ! -d $BINDIR ]; then
+	if [ ! -d "$BINDIR" ]; then
 		faltaInstalar=1
 		return
 	fi
-	if [ ! -d $MAEDIR ]; then
+	if [ ! -d "$MAEDIR" ]; then
 		faltaInstalar=1
 		return
 	fi
-	if [ ! -d $MAEDIR/tab ]; then
+	if [ ! -d "$MAEDIR/tab" ]; then
 		faltaInstalar=1
 		return
 	fi
-	if [ ! -d $MAEDIR/tab/ant ]; then
+	if [ ! -d "$MAEDIR/tab/ant" ]; then
 		faltaInstalar=1
 		return
 	fi
-	if [ ! -d $NOVEDIR ]; then
+	if [ ! -d "$NOVEDIR" ]; then
 		faltaInstalar=1
 		return
 	fi
-	if [ ! -d $ACEPDIR ]; then
+	if [ ! -d "$ACEPDIR" ]; then
 		faltaInstalar=1
 		return
 	fi
-	if [ ! -d $RECHDIR ]; then
+	if [ ! -d "$RECHDIR" ]; then
 		faltaInstalar=1
 		return
 	fi
-	if [ ! -d $PROCDIR ]; then
+	if [ ! -d "$PROCDIR" ]; then
 		faltaInstalar=1
 		return
 	fi
-	if [ ! -d $PROCDIR/proc ]; then
+	if [ ! -d "$PROCDIR/proc" ]; then
 		faltaInstalar=1
 		return
 	fi
-	if [ ! -d $INFODIR ]; then
+	if [ ! -d "$INFODIR" ]; then
 		faltaInstalar=1
 		return
 	fi
-	if [ ! -d $LOGDIR ]; then
+	if [ ! -d "$LOGDIR" ]; then
 		faltaInstalar=1
 		return
 	fi
