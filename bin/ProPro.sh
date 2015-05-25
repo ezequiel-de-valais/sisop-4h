@@ -387,11 +387,13 @@ function main {
       for gestion in ${gestiones[*]}; do
           if [ $(ls -R "$GRUPO$ACEPDIR" | grep -xc $gestion) != 0 ]; then
              if [ $(ls -R "$GRUPO$ACEPDIR/$gestion" | cut -d"_" -f1 | grep -c $gestion) != 0 ]; then #Hay al menos un arch de la gestion
-		for archivo in $(ls "$GRUPO$ACEPDIR/$gestion/$DUPDIR"); do
-   			grabarLog "Se rechaza el archivo $archivo por estar DUPLICADO." "WAR"
-    			Mover.sh "$GRUPO$ACEPDIR/$gestion/$DUPDIR/$archivo" "$GRUPO$RECHDIR" "ProPro"
-			(( cantidadArchivosRechazados++ ))
-		done
+		if [ -d "$GRUPO$ACEPDIR/$gestion/$DUPDIR" ]; then
+			for archivo in $(ls "$GRUPO$ACEPDIR/$gestion/$DUPDIR"); do
+	   			grabarLog "Se rechaza el archivo $archivo por estar DUPLICADO." "WAR"
+	    			Mover.sh "$GRUPO$ACEPDIR/$gestion/$DUPDIR/$archivo" "$GRUPO$RECHDIR" "ProPro"
+				(( cantidadArchivosRechazados++ ))
+			done
+		fi
     		fechasordenadas=$(ls "$GRUPO$ACEPDIR/$gestion" | grep "^.*_.*_.*_.*_.*$" | cut -d"_" -f5 | sort -k1.7 -k1.4 -k1.1)
    		for fecha in $fechasordenadas; do
         		for archivo in $(ls "$GRUPO$ACEPDIR/$gestion" | grep "^.*_.*_.*_.*_.*$" | grep $fecha); do

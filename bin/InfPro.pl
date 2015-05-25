@@ -305,7 +305,7 @@ sub grabarEstadistica{
 		
 	$numero_siguiente = $numero_mayor + 1;
 	$result = sprintf('%03d',$numero_siguiente);
-	$ruta_siguiente = $dir."estadistica_".$result;
+	$ruta_siguiente = $dir."/estadistica_".$result;
 	
 	#Grabo la consulta
 	my $i=0;
@@ -442,7 +442,7 @@ sub grabarInforme{
 	
 	$numero_siguiente = $numero_mayor + 1;
 	$result = sprintf('%03d',$numero_siguiente);
-	$ruta_siguiente = $dir."informe_".$result;
+	$ruta_siguiente = $dir."/informe_".$result;
 	
 	#Grabo la consulta
 	@puntajes = keys %hash_puntajes;	
@@ -556,11 +556,15 @@ sub grabarConsulta(){
 		my @rutas = cargarArchivos($dir);
 
 		@rutas = reverse sort(@rutas);
-		$ruta_mayor = $rutas[0];
-		$numero_mayor = substr($ruta_mayor, length($ruta_mayor)-4);	
+		if ((scalar @rutas) > 0){
+			$ruta_mayor = $rutas[0];
+			$numero_mayor = substr($ruta_mayor, length($ruta_mayor)-4);
+		}else{
+			$numero_mayor = 0;
+		}
 		$numero_siguiente = $numero_mayor + 1;
 		$result = sprintf('%03d',$numero_siguiente);
-		$ruta_siguiente = $dir."resultados_".$result;
+		$ruta_siguiente = $dir."/resultados_".$result;
 			
 		open(FILE, "> $ruta_siguiente") || die "Error al abrir el archivo";
 
@@ -1138,9 +1142,8 @@ sub armarHashesParaInforme{
 		$nombre_archivo = substr($ruta, length($ruta) - 15, 10);
 		if ($nombre_archivo eq "resultados"){	
 			open (FILE, "$ruta") or die "Falla al abrir ";
-			$reg = <FILE>;
 
-			while($reg ne ""){ 
+			while($reg = <FILE>){ 
 				@regs = split($separador, $reg);		
 				$i = 1;
 				foreach $campo (@regs){	
@@ -1160,8 +1163,7 @@ sub armarHashesParaInforme{
 						crearHashCodGestion($campo, $ruta);	
 					}
 					$i++;
-				}	
-				$reg = <FILE>;
+				}
 			}
 			close(FILE);
 		}	
