@@ -33,7 +33,7 @@ $ cd bin
 
 $ . IniPro.sh
 
-11. En este momento, el usuario podrá elegir entre ejecutar el demonio RecPro.sh o no.   De decidir no ejecutarlo, podrá hacerlo luego manualmente mediante el siguiente comando:
+11. En este momento, el usuario podrá elegir entre ejecutar el demonio RecPro.sh o no. De decidir no ejecutarlo, podrá hacerlo luego manualmente mediante el siguiente comando:
 
 $ Start.sh RecPro.sh
 
