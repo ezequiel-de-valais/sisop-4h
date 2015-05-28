@@ -484,7 +484,7 @@ sub grabarInforme{
 		}
 		close(FILE);			
 		print("\nSu informe se ha almacenado en la siguiente ruta:\n");
-		print("$ENV{PWD}.$ruta_siguiente\n\n"); ##CORREGIR RUTA!!!!!! IDEM PARA OtrAS GRABACIONES
+		print("$ruta_siguiente\n\n"); ##CORREGIR RUTA!!!!!! IDEM PARA OtrAS GRABACIONES
 	}
 	else{
 		print("\nNo se encontro ninguna coincidencia\n");
